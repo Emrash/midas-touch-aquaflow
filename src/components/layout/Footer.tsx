@@ -1,6 +1,7 @@
 
 import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -42,6 +43,14 @@ const Footer = () => {
               <FooterLink text="Projects" href="#projects" />
               <FooterLink text="Why Choose Us" href="#why-choose" />
               <FooterLink text="Contact Us" href="#contact" />
+              <li>
+                <Link 
+                  to="/logistics" 
+                  className="hover:text-mdpc-gold transition-colors duration-300 flex items-center"
+                >
+                  <span className="mr-2">›</span> Logistics Services
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -57,6 +66,14 @@ const Footer = () => {
               <FooterLink text="Pump Installation" href="#services" />
               <FooterLink text="Industrial Control" href="#services" />
               <FooterLink text="Mining & Core Drilling" href="#services" />
+              <li>
+                <Link 
+                  to="/logistics" 
+                  className="hover:text-mdpc-gold transition-colors duration-300 flex items-center"
+                >
+                  <span className="mr-2">›</span> Transportation & Logistics
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -79,9 +96,11 @@ const Footer = () => {
                 <span>info@midastouchdrills.com</span>
               </li>
             </ul>
-            <Button className="mt-6 bg-mdpc-gold hover:bg-mdpc-gold-dark text-mdpc-brown-dark font-medium">
-              Get a Quote
-            </Button>
+            <a href="#contact">
+              <Button className="mt-6 bg-mdpc-gold hover:bg-mdpc-gold-dark text-mdpc-brown-dark font-medium">
+                Get a Quote
+              </Button>
+            </a>
           </div>
         </div>
 

@@ -1,11 +1,15 @@
 
 import { useEffect, useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import ContactForm from "../ui/ContactForm";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import Map from "../ui/Map";
+import LogisticsModal from "../ui/LogisticsModal";
 
 const ContactSection = () => {
   const [isInView, setIsInView] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  const [isLogisticsModalOpen, setIsLogisticsModalOpen] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -30,6 +34,9 @@ const ContactSection = () => {
       }
     };
   }, []);
+
+  // Lagos office coordinates
+  const officeCoordinates: [number, number] = [6.5244, 3.3792];
 
   return (
     <section 
@@ -139,26 +146,18 @@ const ContactSection = () => {
           </div>
         </div>
 
-        {/* Google Maps */}
+        {/* Google Maps - Now using actual OpenStreetMap via Leaflet */}
         <div 
-          className={`mt-12 rounded-xl overflow-hidden shadow-lg h-64 transform transition-all duration-700 ${
+          className={`mt-12 rounded-xl overflow-hidden shadow-lg transform transition-all duration-700 ${
             isInView ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
           }`}
           style={{ transitionDelay: "400ms" }}
         >
-          {/* Map placeholder - In a real implementation, replace with embedded Google Maps */}
-          <div className="bg-gray-300 h-full relative">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <p className="text-mdpc-brown">Google Maps Embed of Office Location in Lagos</p>
-              {/* Map pin icon */}
-              <div className="absolute">
-                <div className="h-10 w-10 bg-mdpc-gold rounded-full flex items-center justify-center animate-bounce">
-                  <MapPin className="h-6 w-6 text-white" />
-                </div>
-                <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-mdpc-gold mx-auto"></div>
-              </div>
-            </div>
-          </div>
+          <Map 
+            center={officeCoordinates} 
+            markers={[{ position: officeCoordinates, popup: "Midas Touch Drills - Lagos Office", isMain: true }]}
+            height="400px"
+          />
         </div>
 
         {/* Call to Action */}
@@ -189,8 +188,44 @@ const ContactSection = () => {
               Email Us
             </a>
           </div>
+
+          {/* Logistics Arm Mention */}
+          <div className="mt-12 pt-8 border-t border-gray-200">
+            <div className="bg-blue-50 p-6 rounded-lg">
+              <h4 className="text-lg font-bold text-mdpc-blue mb-2">Need Logistics Support?</h4>
+              <p className="text-mdpc-brown-dark mb-4">
+                Need help moving water systems or construction equipment? Check out our logistics arm.
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                <button
+                  onClick={() => setIsLogisticsModalOpen(true)}
+                  className="inline-flex items-center text-mdpc-blue hover:text-mdpc-gold transition-colors"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Learn More
+                </button>
+                <Link 
+                  to="/logistics" 
+                  className="inline-flex items-center text-mdpc-blue hover:text-mdpc-gold transition-colors font-medium"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                  </svg>
+                  Visit Logistics Page
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Logistics Modal */}
+      <LogisticsModal 
+        isOpen={isLogisticsModalOpen} 
+        onClose={() => setIsLogisticsModalOpen(false)} 
+      />
     </section>
   );
 };

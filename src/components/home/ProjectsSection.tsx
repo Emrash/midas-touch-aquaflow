@@ -1,5 +1,6 @@
 
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import ProjectCard from "../ui/ProjectCard";
 import { Button } from "@/components/ui/button";
 
@@ -7,6 +8,7 @@ const ProjectsSection = () => {
   const [isInView, setIsInView] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const [activeFilter, setActiveFilter] = useState("All");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -34,36 +36,42 @@ const ProjectsSection = () => {
 
   const projects = [
     {
+      id: "community-borehole",
       title: "Community Borehole Project",
       location: "Lagos State",
       image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2500",
       category: "Borehole",
     },
     {
+      id: "industrial-water-filtration",
       title: "Industrial Water Filtration",
       location: "Abuja",
       image: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80&w=2500",
       category: "Filtration",
     },
     {
+      id: "agricultural-irrigation-system",
       title: "Agricultural Irrigation System",
       location: "Kano",
       image: "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=2500",
       category: "Irrigation",
     },
     {
+      id: "hospital-water-supply",
       title: "Hospital Water Supply",
       location: "Port Harcourt",
       image: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=80&w=2500",
       category: "Infrastructure",
     },
     {
+      id: "mining-site-water-management",
       title: "Mining Site Water Management",
       location: "Plateau State",
       image: "https://images.unsplash.com/photo-1504893524553-b855bce32c67?auto=format&fit=crop&q=80&w=2500",
       category: "Mining",
     },
     {
+      id: "rural-water-access-program",
       title: "Rural Water Access Program",
       location: "Enugu State",
       image: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&q=80&w=2500",
@@ -110,6 +118,7 @@ const ProjectsSection = () => {
           {filteredProjects.map((project, index) => (
             <ProjectCard
               key={index}
+              id={project.id}
               title={project.title}
               location={project.location}
               image={project.image}
@@ -164,7 +173,10 @@ const ProjectsSection = () => {
 
         {/* CTA */}
         <div className="mt-12 text-center">
-          <Button className="bg-mdpc-blue hover:bg-mdpc-blue-dark text-white">
+          <Button 
+            className="bg-mdpc-blue hover:bg-mdpc-blue-dark text-white"
+            onClick={() => navigate('/projects')}
+          >
             View All Projects
           </Button>
         </div>

@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface ProjectCardProps {
   title: string;
@@ -9,6 +10,7 @@ interface ProjectCardProps {
   category: string;
   delay: number;
   isInView: boolean;
+  id?: string; // Add ID for navigation
 }
 
 const ProjectCard = ({ 
@@ -17,9 +19,15 @@ const ProjectCard = ({
   image, 
   category, 
   delay,
-  isInView 
+  isInView,
+  id = title.toLowerCase().replace(/\s+/g, '-') // Generate an ID if not provided
 }: ProjectCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+
+  const handleViewProject = () => {
+    navigate(`/projects/${id}`);
+  };
 
   return (
     <div 
@@ -32,6 +40,7 @@ const ProjectCard = ({
       style={{ transitionDelay: `${delay}ms` }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleViewProject}
     >
       {/* Project Image */}
       <div className="h-64 overflow-hidden">

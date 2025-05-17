@@ -1,11 +1,15 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, Phone, Menu, X } from "lucide-react";
+import { Home, Phone, Menu, X, LogIn, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, logout, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   // Handle scroll effect for navbar
   useEffect(() => {
@@ -41,6 +45,25 @@ const Navbar = () => {
     }
   };
 
+  // Handle login/logout
+  const handleAuth = () => {
+    if (user) {
+      logout();
+    } else {
+      navigate("/auth");
+    }
+  };
+
+  // Go to admin dashboard or profile
+  const handleProfile = () => {
+    if (isAdmin) {
+      navigate("/admin");
+    } else {
+      // For future implementation of user profile
+      navigate("/profile");
+    }
+  };
+
   return (
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${
@@ -51,10 +74,9 @@ const Navbar = () => {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center">
-            <a
-              href="#"
+            <Link
+              to="/"
               className="flex items-center gap-2"
-              onClick={() => scrollToSection("hero")}
             >
               <div className="h-10 w-10 md:h-12 md:w-12 bg-mdpc-gold rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-lg md:text-xl">MD</span>
@@ -63,23 +85,68 @@ const Navbar = () => {
                 <span className="font-heading font-bold text-xl md:text-2xl">MDPC</span>
                 <span className="hidden md:inline ml-1 text-sm font-light">Ltd.</span>
               </div>
-            </a>
+            </Link>
           </div>
 
           {/* Desktop menu */}
           <div className="hidden lg:flex items-center space-x-6">
-            <NavLink label="Home" sectionId="hero" isScrolled={isScrolled} onClick={() => scrollToSection("hero")} />
-            <NavLink label="About Us" sectionId="about" isScrolled={isScrolled} onClick={() => scrollToSection("about")} />
-            <NavLink label="Services" sectionId="services" isScrolled={isScrolled} onClick={() => scrollToSection("services")} />
-            <NavLink label="Projects" sectionId="projects" isScrolled={isScrolled} onClick={() => scrollToSection("projects")} />
-            <NavLink label="Why Choose Us" sectionId="why-choose" isScrolled={isScrolled} onClick={() => scrollToSection("why-choose")} />
+            <Link to="/" className={`font-medium relative transition duration-300 hover:text-mdpc-gold ${
+              isScrolled ? "text-mdpc-brown-dark" : "text-white"
+            }`}>
+              Home
+            </Link>
+            <Link to="/drilling" className={`font-medium relative transition duration-300 hover:text-mdpc-gold ${
+              isScrolled ? "text-mdpc-brown-dark" : "text-white"
+            }`}>
+              Drilling Services
+            </Link>
+            <Link to="/logistics-services" className={`font-medium relative transition duration-300 hover:text-mdpc-gold ${
+              isScrolled ? "text-mdpc-brown-dark" : "text-white"
+            }`}>
+              Logistics
+            </Link>
+            <Link to="/projects" className={`font-medium relative transition duration-300 hover:text-mdpc-gold ${
+              isScrolled ? "text-mdpc-brown-dark" : "text-white"
+            }`}>
+              Projects
+            </Link>
+            
             <Button 
               onClick={() => scrollToSection("contact")}
-              className="ml-4 bg-mdpc-gold hover:bg-mdpc-gold-dark text-white"
+              className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white"
             >
               <Phone className="mr-2 h-4 w-4" />
               Contact Us
             </Button>
+            
+            {user ? (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={handleProfile}
+                  className={`border ${isScrolled ? "border-mdpc-brown text-mdpc-brown" : "border-white text-white"}`}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  {isAdmin ? "Dashboard" : "Profile"}
+                </Button>
+                <Button 
+                  variant="ghost"
+                  onClick={handleAuth}
+                  className={isScrolled ? "text-mdpc-brown" : "text-white"}
+                >
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="outline"
+                onClick={handleAuth}
+                className={`border ${isScrolled ? "border-mdpc-brown text-mdpc-brown" : "border-white text-white"}`}
+              >
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -100,53 +167,64 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white shadow-lg">
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-3">
-            <MobileNavLink label="Home" onClick={() => scrollToSection("hero")} />
-            <MobileNavLink label="About Us" onClick={() => scrollToSection("about")} />
-            <MobileNavLink label="Services" onClick={() => scrollToSection("services")} />
-            <MobileNavLink label="Projects" onClick={() => scrollToSection("projects")} />
-            <MobileNavLink label="Why Choose Us" onClick={() => scrollToSection("why-choose")} />
-            <MobileNavLink label="Contact Us" onClick={() => scrollToSection("contact")} />
+            <Link to="/" className="w-full text-left py-2 px-4 text-mdpc-brown hover:bg-gray-50 hover:text-mdpc-gold transition duration-300">
+              Home
+            </Link>
+            <Link to="/drilling" className="w-full text-left py-2 px-4 text-mdpc-brown hover:bg-gray-50 hover:text-mdpc-gold transition duration-300">
+              Drilling Services
+            </Link>
+            <Link to="/logistics-services" className="w-full text-left py-2 px-4 text-mdpc-brown hover:bg-gray-50 hover:text-mdpc-gold transition duration-300">
+              Logistics
+            </Link>
+            <Link to="/projects" className="w-full text-left py-2 px-4 text-mdpc-brown hover:bg-gray-50 hover:text-mdpc-gold transition duration-300">
+              Projects
+            </Link>
+            <button 
+              onClick={() => {
+                scrollToSection("contact");
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left py-2 px-4 text-mdpc-brown hover:bg-gray-50 hover:text-mdpc-gold transition duration-300"
+            >
+              Contact Us
+            </button>
+            
+            {user ? (
+              <>
+                <button
+                  onClick={() => {
+                    handleProfile();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left py-2 px-4 text-mdpc-brown hover:bg-gray-50 hover:text-mdpc-gold transition duration-300"
+                >
+                  {isAdmin ? "Admin Dashboard" : "My Profile"}
+                </button>
+                <button
+                  onClick={() => {
+                    handleAuth();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left py-2 px-4 text-mdpc-brown hover:bg-gray-50 hover:text-mdpc-gold transition duration-300"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  handleAuth();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left py-2 px-4 text-mdpc-brown hover:bg-gray-50 hover:text-mdpc-gold transition duration-300"
+              >
+                Login
+              </button>
+            )}
           </div>
         </div>
       )}
     </nav>
-  );
-};
-
-type NavLinkProps = {
-  label: string;
-  sectionId: string;
-  isScrolled: boolean;
-  onClick: () => void;
-};
-
-const NavLink = ({ label, sectionId, isScrolled, onClick }: NavLinkProps) => {
-  return (
-    <button
-      onClick={onClick}
-      className={`font-medium relative transition duration-300 hover:text-mdpc-gold ${
-        isScrolled ? "text-mdpc-brown-dark" : "text-white"
-      }`}
-    >
-      {label}
-      <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-mdpc-gold transition-all duration-300 group-hover:w-full"></span>
-    </button>
-  );
-};
-
-type MobileNavLinkProps = {
-  label: string;
-  onClick: () => void;
-};
-
-const MobileNavLink = ({ label, onClick }: MobileNavLinkProps) => {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full text-left py-2 px-4 text-mdpc-brown hover:bg-gray-50 hover:text-mdpc-gold transition duration-300"
-    >
-      {label}
-    </button>
   );
 };
 

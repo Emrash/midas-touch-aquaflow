@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ui/ProtectedRoute";
 
@@ -49,6 +49,21 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* User Profile - for future implementation */}
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <div className="min-h-screen flex items-center justify-center">
+                    <div className="text-center">
+                      <h1 className="text-2xl font-bold mb-4">User Profile</h1>
+                      <p className="text-gray-500">This page is under construction.</p>
+                    </div>
+                  </div>
                 </ProtectedRoute>
               } 
             />

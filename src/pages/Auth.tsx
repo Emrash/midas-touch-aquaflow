@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
@@ -14,17 +14,33 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { user, signIn, signUp, signInWithGoogle, isAdmin } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (isAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
+    }
+  }, [user, isAdmin, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       await signIn(email, password);
-      navigate("/");
+      // Navigation will happen via useEffect
     } catch (error) {
       console.error(error);
+      toast({
+        title: "Error signing in",
+        description: "Please check your email and password",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -35,9 +51,18 @@ const Auth = () => {
     setIsSubmitting(true);
     try {
       await signUp(email, password);
-      navigate("/");
+      toast({
+        title: "Account created!",
+        description: "You have been successfully signed up and logged in.",
+      });
+      // Navigation will happen via useEffect
     } catch (error) {
       console.error(error);
+      toast({
+        title: "Error signing up",
+        description: "Please check your information and try again",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -47,9 +72,14 @@ const Auth = () => {
     setIsSubmitting(true);
     try {
       await signInWithGoogle();
-      navigate("/");
+      // Navigation will happen via useEffect
     } catch (error) {
       console.error(error);
+      toast({
+        title: "Error signing in with Google",
+        description: "Please try again later",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -91,7 +121,7 @@ const Auth = () => {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
+                        placeholder="•••••••���"
                         required
                       />
                     </div>

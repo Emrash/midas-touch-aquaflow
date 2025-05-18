@@ -7,14 +7,15 @@
 
 @layer base {
   :root {
-    --background: 40 33% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* Light theme */
+    --background: 35 33% 98%;
+    --foreground: 30 10% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 30 10% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 30 10% 15%;
 
     --primary: 207 47% 42%;
     --primary-foreground: 210 40% 98%;
@@ -23,17 +24,17 @@
     --secondary-foreground: 0 0% 100%;
 
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 30 10% 40%;
 
     --accent: 30 67% 52%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent-foreground: 30 10% 15%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 30 15% 90%;
+    --input: 30 15% 90%;
+    --ring: 30 60% 40%;
 
     --radius: 0.75rem;
 
@@ -48,41 +49,43 @@
   }
 
   .dark {
-    --background: 35 25% 15%;
-    --foreground: 210 40% 98%;
+    /* Dark theme */
+    --background: 30 15% 10%;
+    --foreground: 35 25% 90%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 30 10% 15%;
+    --card-foreground: 35 25% 90%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 30 10% 15%;
+    --popover-foreground: 35 25% 90%;
 
     --primary: 207 47% 42%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
 
     --secondary: 34 58% 52%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 35 25% 90%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 30 15% 20%;
+    --muted-foreground: 30 10% 70%;
 
     --accent: 30 67% 52%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 35 25% 90%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 30 15% 25%;
+    --input: 30 15% 25%;
+    --ring: 34 58% 52%;
+
+    --sidebar-background: 30 10% 12%;
+    --sidebar-foreground: 35 25% 90%;
+    --sidebar-primary: 34 58% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 30 15% 20%;
+    --sidebar-accent-foreground: 35 25% 90%;
+    --sidebar-border: 30 15% 25%;
+    --sidebar-ring: 34 58% 52%;
   }
 }
 
@@ -148,7 +151,7 @@
   }
   
   .glass-card {
-    @apply bg-white/95 backdrop-blur-md shadow-xl rounded-xl border border-white/20 hover:shadow-2xl transition duration-300;
+    @apply bg-white/95 dark:bg-mdpc-brown-darkest/60 backdrop-blur-md shadow-xl rounded-xl border border-white/20 dark:border-mdpc-gold/10 hover:shadow-2xl transition duration-300;
   }
   
   .premium-card {
@@ -165,19 +168,19 @@
   }
   
   .form-input {
-    @apply w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-mdpc-blue focus:border-transparent transition duration-200;
+    @apply w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-mdpc-brown-dark/30 bg-white dark:bg-mdpc-brown-darkest/30 dark:text-white focus:outline-none focus:ring-2 focus:ring-mdpc-blue focus:border-transparent transition duration-200;
   }
   
   .form-label {
-    @apply block text-sm font-medium text-mdpc-brown-dark mb-1;
+    @apply block text-sm font-medium text-mdpc-brown-dark dark:text-mdpc-brown-light mb-1;
   }
   
   .nav-link {
-    @apply relative px-3 py-2 text-mdpc-brown-dark hover:text-mdpc-blue font-medium transition duration-300 after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-mdpc-gold after:transform after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100;
+    @apply relative px-3 py-2 text-mdpc-brown-dark dark:text-mdpc-brown-light hover:text-mdpc-blue dark:hover:text-mdpc-gold font-medium transition duration-300 after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-mdpc-gold after:transform after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100;
   }
   
   .nav-link.active {
-    @apply text-mdpc-blue after:scale-x-100;
+    @apply text-mdpc-blue dark:text-mdpc-gold after:scale-x-100;
   }
 
   .water-ripple {
@@ -305,7 +308,7 @@
 
 /* Image placeholders with premium styles */
 .image-placeholder {
-  @apply relative bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden rounded-lg flex items-center justify-center;
+  @apply relative bg-gradient-to-br from-mdpc-brown-lightest to-mdpc-earth-light dark:from-mdpc-brown-dark/30 dark:to-mdpc-blue-darkest/50 overflow-hidden rounded-lg flex items-center justify-center shadow-soft;
 }
 
 .image-placeholder::before {
@@ -315,7 +318,7 @@
 }
 
 .image-placeholder-icon {
-  @apply text-gray-400 opacity-60 transition-opacity duration-300;
+  @apply text-mdpc-brown-dark dark:text-mdpc-gold opacity-60 transition-opacity duration-300;
 }
 
 .image-placeholder:hover .image-placeholder-icon {
@@ -334,7 +337,7 @@
 
 /* Enhanced card hover effects */
 .project-card {
-  @apply relative overflow-hidden rounded-xl shadow-md transition-all duration-300 transform;
+  @apply relative overflow-hidden rounded-xl shadow-soft hover:shadow-elevated transition-all duration-300 transform;
 }
 
 .project-card::before {
@@ -343,7 +346,7 @@
 }
 
 .project-card:hover {
-  @apply -translate-y-2 shadow-xl;
+  @apply -translate-y-2;
 }
 
 .project-card:hover::before {
@@ -364,11 +367,11 @@
 }
 
 .custom-dropdown-trigger {
-  @apply w-full px-4 py-3 rounded-lg border border-gray-300 flex items-center justify-between transition duration-200 bg-white;
+  @apply w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-mdpc-brown-dark/30 flex items-center justify-between transition duration-200 bg-white dark:bg-mdpc-brown-darkest/30 dark:text-white;
 }
 
 .custom-dropdown-menu {
-  @apply absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg opacity-0 invisible transition duration-200 transform origin-top scale-95;
+  @apply absolute z-50 mt-1 w-full rounded-lg border border-gray-200 dark:border-mdpc-brown-dark/30 bg-white dark:bg-mdpc-brown-darkest/90 shadow-lg opacity-0 invisible transition duration-200 transform origin-top scale-95;
 }
 
 .custom-dropdown.open .custom-dropdown-menu {
@@ -376,7 +379,7 @@
 }
 
 .custom-dropdown-item {
-  @apply px-4 py-2 hover:bg-gray-50 cursor-pointer transition duration-150;
+  @apply px-4 py-2 hover:bg-gray-50 dark:hover:bg-mdpc-brown-darkest cursor-pointer transition duration-150 dark:text-white;
 }
 
 /* Premium scrollbars */
@@ -386,9 +389,9 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 rounded-full;
+  @apply bg-gray-100 dark:bg-mdpc-brown-darkest rounded-full;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-mdpc-blue/70 rounded-full transition-colors duration-200 hover:bg-mdpc-blue;
+  @apply bg-mdpc-blue/70 dark:bg-mdpc-gold/50 rounded-full transition-colors duration-200 hover:bg-mdpc-blue dark:hover:bg-mdpc-gold;
 }

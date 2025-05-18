@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
@@ -243,11 +244,11 @@ const ProjectDetails = () => {
 
               {/* Testimonial if available */}
               {project.testimonial && (
-                <div className="mb-10 bg-blue-50 border-l-4 border-mdpc-blue p-6 rounded-lg">
-                  <blockquote className="text-mdpc-brown-dark italic mb-4">
+                <div className="mb-10 bg-blue-50 dark:bg-mdpc-blue-darkest/30 border-l-4 border-mdpc-blue dark:border-mdpc-gold p-6 rounded-lg">
+                  <blockquote className="text-mdpc-brown-dark dark:text-mdpc-brown-light italic mb-4">
                     "{project.testimonial.quote}"
                   </blockquote>
-                  <div className="font-medium text-mdpc-blue">- {project.testimonial.author}</div>
+                  <div className="font-medium text-mdpc-blue dark:text-mdpc-gold">- {project.testimonial.author}</div>
                 </div>
               )}
             </div>
@@ -255,23 +256,23 @@ const ProjectDetails = () => {
             {/* Sidebar */}
             <div className="lg:col-span-1">
               {/* Project Details */}
-              <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-                <h3 className="text-xl font-heading font-bold text-mdpc-blue mb-4">Project Details</h3>
+              <div className="bg-white dark:bg-mdpc-brown-darkest/50 rounded-lg shadow-lg p-6 mb-8">
+                <h3 className="text-xl font-heading font-bold text-mdpc-blue dark:text-mdpc-gold mb-4">Project Details</h3>
                 
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-sm font-semibold text-mdpc-gold mb-1">Category</h4>
-                    <p className="text-mdpc-brown-dark">{project.category}</p>
+                    <p className="text-mdpc-brown-dark dark:text-mdpc-brown-light">{project.category}</p>
                   </div>
                   
                   <div>
                     <h4 className="text-sm font-semibold text-mdpc-gold mb-1">Duration</h4>
-                    <p className="text-mdpc-brown-dark">{project.duration}</p>
+                    <p className="text-mdpc-brown-dark dark:text-mdpc-brown-light">{project.duration}</p>
                   </div>
                   
                   <div>
                     <h4 className="text-sm font-semibold text-mdpc-gold mb-1">Tools & Equipment</h4>
-                    <ul className="list-disc list-inside text-mdpc-brown-dark">
+                    <ul className="list-disc list-inside text-mdpc-brown-dark dark:text-mdpc-brown-light">
                       {project.tools.map((tool: string, index: number) => (
                         <li key={index}>{tool}</li>
                       ))}
@@ -281,8 +282,8 @@ const ProjectDetails = () => {
               </div>
 
               {/* Location Map */}
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-xl font-heading font-bold text-mdpc-blue mb-4">Project Location</h3>
+              <div className="bg-white dark:bg-mdpc-brown-darkest/50 rounded-lg shadow-lg p-6">
+                <h3 className="text-xl font-heading font-bold text-mdpc-blue dark:text-mdpc-gold mb-4">Project Location</h3>
                 <Map 
                   center={project.coordinates}
                   zoom={12}
@@ -295,7 +296,7 @@ const ProjectDetails = () => {
           
           {/* Related Projects */}
           <div className="mt-12">
-            <h2 className="text-2xl font-heading font-bold text-mdpc-blue mb-6">Related Projects</h2>
+            <h2 className="text-2xl font-heading font-bold text-mdpc-blue dark:text-mdpc-gold mb-6">Related Projects</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {projectsData
                 .filter(p => p.category === project.category && p.id !== project.id)
@@ -303,7 +304,7 @@ const ProjectDetails = () => {
                 .map((relatedProject, index) => (
                   <div 
                     key={index} 
-                    className="bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-transform hover:scale-105"
+                    className="bg-white dark:bg-mdpc-brown-darkest/50 rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-transform hover:scale-105"
                     onClick={() => navigate(`/projects/${relatedProject.id}`)}
                   >
                     <div className="h-48 overflow-hidden">
@@ -314,8 +315,8 @@ const ProjectDetails = () => {
                       />
                     </div>
                     <div className="p-4">
-                      <h3 className="text-lg font-heading font-bold text-mdpc-blue">{relatedProject.title}</h3>
-                      <div className="flex items-center text-mdpc-brown-dark text-sm mt-2">
+                      <h3 className="text-lg font-heading font-bold text-mdpc-blue dark:text-mdpc-gold">{relatedProject.title}</h3>
+                      <div className="flex items-center text-mdpc-brown-dark dark:text-mdpc-brown-light text-sm mt-2">
                         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -329,9 +330,9 @@ const ProjectDetails = () => {
           </div>
 
           {/* CTA */}
-          <div className="mt-16 py-10 px-6 bg-mdpc-blue rounded-lg text-center">
+          <div className="mt-16 py-10 px-6 bg-mdpc-blue dark:bg-mdpc-brown-dark/70 rounded-lg text-center">
             <h2 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4">Ready to Start Your Own Project?</h2>
-            <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
+            <p className="text-blue-100 dark:text-mdpc-brown-lightest mb-6 max-w-2xl mx-auto">
               Contact our team of experts to discuss your water solution needs and get a customized proposal.
             </p>
             <Button 

@@ -5,7 +5,7 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   onAuthStateChanged, 
-  signOut,
+  signOut as firebaseSignOut,
   signInWithPopup,
   GoogleAuthProvider
 } from 'firebase/auth';
@@ -18,7 +18,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  logout: () => Promise<void>;
+  signOut: () => Promise<void>;  // Renamed from logout to signOut for consistency
   isAdmin: boolean;
 }
 
@@ -99,9 +99,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async () => {
+  const signOut = async () => {
     try {
-      await signOut(auth);
+      await firebaseSignOut(auth);
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
@@ -117,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signOut, isAdmin }}>
       {!loading && children}
     </AuthContext.Provider>
   );

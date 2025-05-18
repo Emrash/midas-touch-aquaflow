@@ -50,8 +50,9 @@ const ProjectsSection = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3
+        staggerChildren: 0.05,  // Reduced stagger time
+        delayChildren: 0.2,     // Reduced delay
+        duration: 0.3,          // Faster animation
       }
     }
   };
@@ -61,9 +62,20 @@ const ProjectsSection = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5 }
+      transition: { duration: 0.3 } // Faster animation
     }
   };
+
+  const handleViewAllClick = () => {
+    // If on home page, use a Link to navigate
+    // If already on projects page, this section will be hidden
+    if (window.location.pathname !== '/projects') {
+      // Handled by the Link
+    }
+  };
+
+  // Check if current page is the projects page
+  const isProjectsPage = window.location.pathname === '/projects';
 
   return (
     <section id="projects" ref={sectionRef} className="py-20 bg-gray-50 dark:bg-gray-900/50">
@@ -72,7 +84,7 @@ const ProjectsSection = () => {
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.5 }}
         >
           <h2 className="section-title dark:text-white">Our Projects</h2>
           <p className="mt-4 text-mdpc-brown-dark dark:text-gray-300 max-w-2xl mx-auto">
@@ -148,23 +160,25 @@ const ProjectsSection = () => {
           )}
         </motion.div>
         
-        {/* View More Button */}
-        <motion.div 
-          className="text-center mt-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.7, delay: 0.6 }}
-        >
-          <Link to="/projects">
-            <Button 
-              size="lg"
-              className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white relative overflow-hidden group"
-            >
-              <span className="relative z-10">View All Projects</span>
-              <span className="absolute top-0 left-0 w-full h-full bg-white/20 transform -skew-x-45 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></span>
-            </Button>
-          </Link>
-        </motion.div>
+        {/* View More Button - only show on home page and not on projects page */}
+        {!isProjectsPage && (
+          <motion.div 
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Link to="/projects">
+              <Button 
+                size="lg"
+                className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white relative overflow-hidden group"
+              >
+                <span className="relative z-10">View All Projects</span>
+                <span className="absolute top-0 left-0 w-full h-full bg-white/20 transform -skew-x-45 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></span>
+              </Button>
+            </Link>
+          </motion.div>
+        )}
       </div>
     </section>
   );

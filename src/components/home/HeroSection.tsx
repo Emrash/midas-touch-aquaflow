@@ -1,11 +1,14 @@
+
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useConsultation } from "@/contexts/ConsultationContext";
 
 const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number; size: number }[]>([]);
+  const { openModal } = useConsultation();
   
   useEffect(() => {
     setIsVisible(true);
@@ -84,7 +87,8 @@ const HeroSection = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.3
+        staggerChildren: 0.2,
+        duration: 0.5
       }
     }
   };
@@ -98,9 +102,20 @@ const HeroSection = () => {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.7,
+        duration: 0.5,
         ease: [0.04, 0.62, 0.23, 0.98]
       }
+    }
+  };
+
+  const handleContactRequest = () => {
+    openModal('general', 'Request a Consultation', "Tell us about your project needs and we'll get back to you within 24 hours.");
+  };
+
+  const scrollToContact = () => {
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -171,6 +186,7 @@ const HeroSection = () => {
           >
             <Button 
               size="lg" 
+              onClick={handleContactRequest}
               className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-semibold py-7 px-8 rounded-lg shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-105 relative overflow-hidden group"
             >
               <span className="relative z-10">Request a Consultation</span>
@@ -179,6 +195,7 @@ const HeroSection = () => {
             <Button 
               size="lg" 
               variant="outline" 
+              onClick={scrollToContact}
               className="bg-transparent border-2 border-white text-white hover:bg-white/10 font-semibold py-7 px-8 rounded-lg transition duration-300 relative overflow-hidden group"
             >
               <span className="relative z-10">Get a Quote</span>

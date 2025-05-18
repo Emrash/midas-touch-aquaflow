@@ -1,5 +1,6 @@
 
 import { useEffect } from "react";
+import { useConsultation } from "../contexts/ConsultationContext";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import HeroSection from "../components/home/HeroSection";
@@ -10,6 +11,8 @@ import WhyChooseSection from "../components/home/WhyChooseSection";
 import ContactSection from "../components/home/ContactSection";
 
 const Index = () => {
+  const { openModal } = useConsultation();
+
   useEffect(() => {
     // Set title and meta description
     document.title = "Midas Touch Drills and Projects Consult - Nigeria's Foremost Borehole Drilling Company";
@@ -19,7 +22,7 @@ const Index = () => {
       metaDescription.setAttribute('content', 'Nigeria\'s leading borehole drilling and water solutions company providing geophysical surveys, borehole drilling, water filtration, and industrial control services.');
     }
     
-    // Animate elements on scroll
+    // Animate elements on scroll - with debouncing for performance
     const animateOnScroll = () => {
       const elements = document.querySelectorAll('.animate-on-scroll');
       
@@ -33,7 +36,16 @@ const Index = () => {
       });
     };
     
-    // Smooth scroll for anchor links
+    // Debounced scroll handler
+    let scrollTimeout: number;
+    const handleScrollDebounced = () => {
+      if (scrollTimeout) {
+        window.cancelAnimationFrame(scrollTimeout);
+      }
+      scrollTimeout = window.requestAnimationFrame(animateOnScroll);
+    };
+    
+    // Smooth scroll for anchor links with improved performance
     const handleAnchorClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const anchor = target.closest('a');
@@ -60,18 +72,31 @@ const Index = () => {
       }
     };
     
+    // Handle consultation and quote requests
+    const handleConsultationClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const button = target.closest('[data-action="consultation"]');
+      
+      if (button) {
+        e.preventDefault();
+        openModal('general', 'Request a Consultation', "Tell us about your project needs and we'll get back to you within 24 hours.");
+      }
+    };
+    
     // Add event listeners
-    window.addEventListener('scroll', animateOnScroll);
+    window.addEventListener('scroll', handleScrollDebounced);
     document.body.addEventListener('click', handleAnchorClick);
+    document.body.addEventListener('click', handleConsultationClick);
     
     // Run once on initial load
     animateOnScroll();
     
     return () => {
-      window.removeEventListener('scroll', animateOnScroll);
+      window.removeEventListener('scroll', handleScrollDebounced);
       document.body.removeEventListener('click', handleAnchorClick);
+      document.body.removeEventListener('click', handleConsultationClick);
     };
-  }, []);
+  }, [openModal]);
 
   return (
     <div className="min-h-screen">

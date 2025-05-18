@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -107,6 +108,19 @@ export default {
 						light: '#FEF3C7',
 						DEFAULT: '#D97706',
 						dark: '#92400E',
+					},
+					// New neutral tones for better contrast
+					neutral: {
+						50: '#FAFAFA',
+						100: '#F5F5F5',
+						200: '#E5E5E5',
+						300: '#D4D4D4',
+						400: '#A3A3A3',
+						500: '#737373',
+						600: '#525252',
+						700: '#404040',
+						800: '#262626',
+						900: '#171717',
 					}
 				}
 			},
@@ -125,6 +139,8 @@ export default {
 				'premium-inner': 'inset 0 2px 6px -2px rgba(0, 0, 0, 0.1)',
 				'gold-glow': '0 0 15px rgba(212, 175, 55, 0.5)',
 				'blue-glow': '0 0 15px rgba(58, 124, 165, 0.5)',
+				'soft': '0 2px 10px rgba(0, 0, 0, 0.08)',
+				'elevated': '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -183,14 +199,6 @@ export default {
 					'0%, 100%': { opacity: '0.8', boxShadow: '0 0 5px rgba(212, 175, 55, 0.5)' },
 					'50%': { opacity: '1', boxShadow: '0 0 20px rgba(212, 175, 55, 0.8)' }
 				},
-				'scale-up': {
-					'0%': { transform: 'scale(0.95)', opacity: '0' },
-					'100%': { transform: 'scale(1)', opacity: '1' }
-				},
-				'scale-down': {
-					'0%': { transform: 'scale(1.05)', opacity: '0' },
-					'100%': { transform: 'scale(1)', opacity: '1' }
-				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -206,8 +214,6 @@ export default {
 				'ripple': 'ripple 1.5s ease-out forwards',
 				'shimmer': 'shimmer 2.5s infinite',
 				'pulse-glow': 'pulse-glow 3s infinite',
-				'scale-up': 'scale-up 0.4s ease-out',
-				'scale-down': 'scale-down 0.4s ease-out'
 			},
 			backgroundImage: {
 				'hero-pattern': "url('/placeholder.svg')",
@@ -216,8 +222,8 @@ export default {
 				'gold-gradient': "linear-gradient(to top, #e6b980 0%, #eacda3 100%)",
 				'blue-gradient': "linear-gradient(135deg, #81C3D7 0%, #3A7CA5 100%)",
 				'premium-gradient': "linear-gradient(135deg, #D4AF37 0%, #F5E7A3 50%, #D4AF37 100%)",
-				'dark-gradient': "linear-gradient(to right, #2C1E0F 0%, #513A1F 100%)",
-				'water-flow': "linear-gradient(to right, #3A7CA5 0%, #81C3D7 50%, #3A7CA5 100%)"
+				'premium-dark': "linear-gradient(135deg, #2C1E0F 0%, #513A1F 100%)",
+				'blue-gradient-soft': "linear-gradient(135deg, #D4E9F7 0%, #3A7CA5 100%)",
 			},
 			skew: {
 				// Add custom skew values if needed

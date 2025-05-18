@@ -7,7 +7,8 @@ import {
   onAuthStateChanged, 
   signOut as firebaseSignOut,
   signInWithPopup,
-  GoogleAuthProvider
+  GoogleAuthProvider,
+  updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { toast } from '@/hooks/use-toast';
@@ -16,9 +17,9 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<{ user: User } | undefined>;
   signInWithGoogle: () => Promise<void>;
-  signOut: () => Promise<void>;  // Renamed from logout to signOut for consistency
+  signOut: () => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -53,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Success!",
-        description: "You have successfully signed in.",
+        description: `Welcome back${user?.displayName ? ', ' + user.displayName : ''}!`,
       });
     } catch (error: any) {
       toast({
@@ -67,11 +68,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
       toast({
         title: "Account created!",
         description: "Your account has been created successfully.",
       });
+      return result;
     } catch (error: any) {
       toast({
         title: "Error signing up",
@@ -84,11 +86,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      toast({
-        title: "Success!",
-        description: "You have successfully signed in with Google.",
-      });
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const isNewUser = result.additionalUserInfo?.isNewUser;
+      
+      if (isNewUser) {
+        toast({
+          title: "Welcome!",
+          description: "Your Google account has been registered successfully.",
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: `Welcome back${user.displayName ? ', ' + user.displayName : ''}!`,
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error signing in with Google",

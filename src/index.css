@@ -283,7 +283,7 @@
 
 .cta-button::before {
   content: '';
-  @apply absolute top-0 left-0 w-full h-full bg-white/20 transform -skew-x-45 -translate-x-full transition-transform duration-700 ease-out;
+  @apply absolute top-0 left-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full transition-transform duration-700 ease-out;
 }
 
 .cta-button:hover::before {
@@ -296,7 +296,7 @@
 
 .cta-button-secondary::before {
   content: '';
-  @apply absolute top-0 left-0 w-full h-full bg-white/20 transform -skew-x-45 -translate-x-full transition-transform duration-700 ease-out;
+  @apply absolute top-0 left-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full transition-transform duration-700 ease-out;
 }
 
 .cta-button-secondary:hover::before {

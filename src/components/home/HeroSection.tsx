@@ -174,7 +174,7 @@ const HeroSection = () => {
               className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-semibold py-7 px-8 rounded-lg shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-105 relative overflow-hidden group"
             >
               <span className="relative z-10">Request a Consultation</span>
-              <span className="absolute top-0 left-0 w-full h-full bg-white/20 transform -skew-x-45 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></span>
+              <span className="absolute top-0 left-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></span>
             </Button>
             <Button 
               size="lg" 
@@ -182,7 +182,7 @@ const HeroSection = () => {
               className="bg-transparent border-2 border-white text-white hover:bg-white/10 font-semibold py-7 px-8 rounded-lg transition duration-300 relative overflow-hidden group"
             >
               <span className="relative z-10">Get a Quote</span>
-              <span className="absolute top-0 left-0 w-full h-full bg-white/10 transform -skew-x-45 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></span>
+              <span className="absolute top-0 left-0 w-full h-full bg-white/10 transform -skew-x-12 -translate-x-full group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></span>
             </Button>
           </motion.div>
         </div>

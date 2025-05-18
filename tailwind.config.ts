@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -220,6 +219,9 @@ export default {
 				'dark-gradient': "linear-gradient(to right, #2C1E0F 0%, #513A1F 100%)",
 				'water-flow': "linear-gradient(to right, #3A7CA5 0%, #81C3D7 50%, #3A7CA5 100%)"
 			},
+			skew: {
+				// Add custom skew values if needed
+			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

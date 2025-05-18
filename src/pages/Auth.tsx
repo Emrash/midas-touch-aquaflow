@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { motion } from "framer-motion";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -23,9 +25,11 @@ const Auth = () => {
       if (isAdmin) {
         navigate("/admin");
       } else {
-        navigate("/");
+        navigate("/profile");
       }
     }
+    
+    document.title = "Sign In | Midas Touch";
   }, [user, isAdmin, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -33,6 +37,10 @@ const Auth = () => {
     setIsSubmitting(true);
     try {
       await signIn(email, password);
+      toast({
+        title: "Signed in successfully",
+        description: "Welcome back to Midas Touch!",
+      });
       // Navigation will happen via useEffect
     } catch (error) {
       console.error(error);
@@ -86,14 +94,19 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-gray-100 dark:from-mdpc-brown-darkest/90 dark:to-mdpc-brown-darkest">
       <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-12">
-        <div className="max-w-md mx-auto">
-          <Card>
+      <main className="flex-grow container mx-auto px-4 py-16 flex items-center justify-center">
+        <motion.div 
+          className="max-w-md w-full"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="border-0 shadow-xl dark:bg-mdpc-brown-darkest/70 dark:backdrop-blur-sm">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl text-mdpc-blue font-heading">Welcome to Midas Touch</CardTitle>
-              <CardDescription>Sign in to access your account and services</CardDescription>
+              <CardTitle className="text-2xl text-mdpc-blue dark:text-mdpc-gold font-heading">Welcome to Midas Touch</CardTitle>
+              <CardDescription className="dark:text-mdpc-brown-light">Sign in to access your account and services</CardDescription>
             </CardHeader>
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid grid-cols-2">
@@ -104,7 +117,7 @@ const Auth = () => {
                 <form onSubmit={handleSignIn}>
                   <CardContent className="space-y-4 pt-6">
                     <div className="space-y-2">
-                      <label htmlFor="email" className="text-sm font-medium">Email</label>
+                      <label htmlFor="email" className="text-sm font-medium dark:text-mdpc-brown-light">Email</label>
                       <Input
                         id="email"
                         type="email"
@@ -112,17 +125,19 @@ const Auth = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="your@email.com"
                         required
+                        className="dark:bg-mdpc-brown-darkest/30 dark:border-mdpc-brown-dark/30 dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="password" className="text-sm font-medium">Password</label>
+                      <label htmlFor="password" className="text-sm font-medium dark:text-mdpc-brown-light">Password</label>
                       <Input
                         id="password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="•••••••���"
+                        placeholder="••••••••"
                         required
+                        className="dark:bg-mdpc-brown-darkest/30 dark:border-mdpc-brown-dark/30 dark:text-white"
                       />
                     </div>
                   </CardContent>
@@ -135,16 +150,16 @@ const Auth = () => {
                       {isSubmitting ? "Signing in..." : "Sign In"}
                     </Button>
                     
-                    <div className="my-4 flex items-center">
-                      <Separator className="flex-grow" />
-                      <span className="mx-2 text-sm text-gray-500">OR</span>
-                      <Separator className="flex-grow" />
+                    <div className="my-4 flex items-center w-full">
+                      <Separator className="flex-grow dark:bg-mdpc-brown-dark/30" />
+                      <span className="mx-2 text-sm text-gray-500 dark:text-mdpc-brown-light">OR</span>
+                      <Separator className="flex-grow dark:bg-mdpc-brown-dark/30" />
                     </div>
                     
                     <Button 
                       type="button" 
                       variant="outline" 
-                      className="w-full"
+                      className="w-full dark:border-mdpc-brown-dark/30 dark:text-mdpc-brown-light dark:hover:bg-mdpc-brown-dark/20"
                       onClick={handleGoogleSignIn}
                       disabled={isSubmitting}
                     >
@@ -175,7 +190,7 @@ const Auth = () => {
                 <form onSubmit={handleSignUp}>
                   <CardContent className="space-y-4 pt-6">
                     <div className="space-y-2">
-                      <label htmlFor="signup-email" className="text-sm font-medium">Email</label>
+                      <label htmlFor="signup-email" className="text-sm font-medium dark:text-mdpc-brown-light">Email</label>
                       <Input
                         id="signup-email"
                         type="email"
@@ -183,10 +198,11 @@ const Auth = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="your@email.com"
                         required
+                        className="dark:bg-mdpc-brown-darkest/30 dark:border-mdpc-brown-dark/30 dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="signup-password" className="text-sm font-medium">Password</label>
+                      <label htmlFor="signup-password" className="text-sm font-medium dark:text-mdpc-brown-light">Password</label>
                       <Input
                         id="signup-password"
                         type="password"
@@ -194,6 +210,7 @@ const Auth = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         required
+                        className="dark:bg-mdpc-brown-darkest/30 dark:border-mdpc-brown-dark/30 dark:text-white"
                       />
                     </div>
                   </CardContent>
@@ -206,16 +223,16 @@ const Auth = () => {
                       {isSubmitting ? "Signing up..." : "Sign Up"}
                     </Button>
                     
-                    <div className="my-4 flex items-center">
-                      <Separator className="flex-grow" />
-                      <span className="mx-2 text-sm text-gray-500">OR</span>
-                      <Separator className="flex-grow" />
+                    <div className="my-4 flex items-center w-full">
+                      <Separator className="flex-grow dark:bg-mdpc-brown-dark/30" />
+                      <span className="mx-2 text-sm text-gray-500 dark:text-mdpc-brown-light">OR</span>
+                      <Separator className="flex-grow dark:bg-mdpc-brown-dark/30" />
                     </div>
                     
                     <Button 
                       type="button" 
                       variant="outline" 
-                      className="w-full"
+                      className="w-full dark:border-mdpc-brown-dark/30 dark:text-mdpc-brown-light dark:hover:bg-mdpc-brown-dark/20"
                       onClick={handleGoogleSignIn}
                       disabled={isSubmitting}
                     >
@@ -244,7 +261,7 @@ const Auth = () => {
               </TabsContent>
             </Tabs>
           </Card>
-        </div>
+        </motion.div>
       </main>
       <Footer />
     </div>

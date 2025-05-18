@@ -1,13 +1,22 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "../ui/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
+import { 
+  User,
+  LogIn,
+  Menu,
+  X
+} from "lucide-react";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path || location.hash === path;
@@ -32,6 +41,17 @@ const Navbar = () => {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
+
+  const handleGetQuote = () => {
+    if (location.pathname === '/') {
+      const contactSection = document.getElementById('contact');
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      navigate('/#contact');
+    }
+  };
 
   return (
     <header
@@ -75,7 +95,45 @@ const Navbar = () => {
             Contact
           </NavLink>
           <ThemeToggle />
+          
+          {user ? (
+            <div className="flex items-center gap-2 ml-4">
+              <Button
+                asChild
+                variant="ghost"
+                className="flex items-center gap-2 text-mdpc-brown-dark dark:text-mdpc-brown-light"
+              >
+                <Link to={user.email === "yekinirasheed2002@gmail.com" ? "/admin" : "/profile"}>
+                  <User size={18} />
+                  <span className="hidden lg:inline">
+                    {user.email === "yekinirasheed2002@gmail.com" ? "Admin" : "Profile"}
+                  </span>
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => signOut()}
+                className="border-mdpc-brown/30 dark:border-mdpc-gold/20"
+              >
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Button
+              asChild
+              variant="outline"
+              className="ml-4 flex items-center gap-2 border-mdpc-brown/30 dark:border-mdpc-gold/20"
+            >
+              <Link to="/auth">
+                <LogIn size={18} />
+                <span>Login</span>
+              </Link>
+            </Button>
+          )}
+          
           <Button
+            onClick={handleGetQuote}
             className={`ml-4 ${
               isScrolled
                 ? "bg-mdpc-gold hover:bg-mdpc-gold-dark"
@@ -95,35 +153,9 @@ const Navbar = () => {
             aria-label="Toggle mobile menu"
           >
             {isMobileMenuOpen ? (
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              </svg>
+              <X className="w-6 h-6" />
             ) : (
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h16m-7 6h7"
-                ></path>
-              </svg>
+              <Menu className="w-6 h-6" />
             )}
           </button>
         </div>
@@ -133,7 +165,7 @@ const Navbar = () => {
       <div
         className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
           isMobileMenuOpen
-            ? "max-h-[300px] opacity-100"
+            ? "max-h-[400px] opacity-100"
             : "max-h-0 opacity-0"
         }`}
       >
@@ -154,7 +186,30 @@ const Navbar = () => {
             <MobileNavLink to="/#contact" active={isActive("#contact")}>
               Contact
             </MobileNavLink>
-            <Button className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-medium mt-2">
+            
+            {user ? (
+              <>
+                <MobileNavLink 
+                  to={user.email === "yekinirasheed2002@gmail.com" ? "/admin" : "/profile"} 
+                  active={isActive(user.email === "yekinirasheed2002@gmail.com" ? "/admin" : "/profile")}
+                >
+                  {user.email === "yekinirasheed2002@gmail.com" ? "Admin Dashboard" : "My Profile"}
+                </MobileNavLink>
+                <Button 
+                  variant="outline" 
+                  onClick={() => signOut()} 
+                  className="mt-2 w-full justify-start"
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <MobileNavLink to="/auth" active={isActive("/auth")}>
+                Login / Register
+              </MobileNavLink>
+            )}
+            
+            <Button onClick={handleGetQuote} className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-medium mt-2">
               Get a Quote
             </Button>
           </div>

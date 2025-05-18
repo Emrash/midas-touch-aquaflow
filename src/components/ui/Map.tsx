@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -15,16 +15,21 @@ export interface MapProps {
 }
 
 const Map = ({ center, zoom = 10, markers, height = "400px" }: MapProps) => {
-  const mapRef = useRef<HTMLDivElement>(null);
+  const mapContainer = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const [isInteracting, setIsInteracting] = useState(false);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapContainer.current) return;
 
     // Only initialize map once
     if (!mapInstanceRef.current) {
       // Create map
-      mapInstanceRef.current = L.map(mapRef.current).setView(center, zoom);
+      mapInstanceRef.current = L.map(mapContainer.current, {
+        scrollWheelZoom: false,  // Disable scroll wheel zoom by default
+        dragging: true,           // Allow dragging
+        tap: false                // Disable tap handler for mobile
+      }).setView(center, zoom);
 
       // Add tile layer
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -56,6 +61,35 @@ const Map = ({ center, zoom = 10, markers, height = "400px" }: MapProps) => {
           .addTo(mapInstanceRef.current!)
           .bindPopup(marker.popup);
       });
+
+      // Add navigation controls
+      L.control.zoom({
+        position: 'bottomright'
+      }).addTo(mapInstanceRef.current);
+
+      // Event handlers for enabling/disabling scroll zoom
+      mapInstanceRef.current.on('click', function() {
+        if (!mapInstanceRef.current!.scrollWheelZoom.enabled()) {
+          mapInstanceRef.current!.scrollWheelZoom.enable();
+          setIsInteracting(true);
+        }
+      });
+
+      // Disable scroll zoom when user clicks outside the map
+      document.addEventListener('click', function(e) {
+        if (mapContainer.current && !mapContainer.current.contains(e.target as Node) && mapInstanceRef.current) {
+          mapInstanceRef.current.scrollWheelZoom.disable();
+          setIsInteracting(false);
+        }
+      });
+      
+      // Disable scroll zoom when map loses focus
+      mapInstanceRef.current.on('blur', function() {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.scrollWheelZoom.disable();
+          setIsInteracting(false);
+        }
+      });
     } else {
       // Update map view if center or zoom changed
       mapInstanceRef.current.setView(center, zoom);
@@ -71,11 +105,25 @@ const Map = ({ center, zoom = 10, markers, height = "400px" }: MapProps) => {
   }, [center, zoom, markers]);
 
   return (
-    <div 
-      ref={mapRef} 
-      className="rounded-lg overflow-hidden border border-gray-200 dark:border-mdpc-brown-dark/30 shadow-md" 
-      style={{ height }}
-    ></div>
+    <div className="relative">
+      <div 
+        ref={mapContainer} 
+        className="rounded-lg overflow-hidden border border-gray-200 dark:border-mdpc-brown-dark/30 shadow-md" 
+        style={{ height }}
+      ></div>
+      {isInteracting && (
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/70 text-white text-xs px-3 py-1 rounded-full">
+          Map active - scrolling enabled
+        </div>
+      )}
+      {!isInteracting && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/70 text-white text-sm px-4 py-2 rounded-full">
+            Click to activate map
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

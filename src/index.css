@@ -139,7 +139,7 @@
   }
   
   .animate-on-scroll {
-    @apply opacity-0 translate-y-10 transition duration-700;
+    @apply opacity-0 translate-y-10 transition duration-500;
   }
   
   .animate-on-scroll.animated {

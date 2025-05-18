@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
@@ -286,6 +285,7 @@ const ProjectDetails = () => {
                 <h3 className="text-xl font-heading font-bold text-mdpc-blue mb-4">Project Location</h3>
                 <Map 
                   center={project.coordinates}
+                  zoom={12}
                   markers={[{ position: project.coordinates, popup: project.title, isMain: true }]}
                   height="250px"
                 />

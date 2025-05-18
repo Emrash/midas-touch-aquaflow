@@ -155,6 +155,7 @@ const ContactSection = () => {
         >
           <Map 
             center={officeCoordinates} 
+            zoom={14} 
             markers={[{ position: officeCoordinates, popup: "Midas Touch Drills - Lagos Office", isMain: true }]}
             height="400px"
           />

@@ -88,7 +88,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      const isNewUser = result.additionalUserInfo?.isNewUser;
+      // Check if this is likely a new user by checking if their last login time is close to account creation time
+      // This is a workaround since additionalUserInfo is not available in newer Firebase versions
+      const isNewUser = !user.metadata.lastSignInTime || 
+        (new Date(user.metadata.creationTime).getTime() + 5000 > new Date(user.metadata.lastSignInTime).getTime());
       
       if (isNewUser) {
         toast({

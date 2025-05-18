@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { motion } from "framer-motion";
+import { User, Mail, Lock } from "lucide-react";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -103,13 +104,16 @@ const Auth = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card className="border-0 shadow-xl dark:bg-mdpc-brown-darkest/70 dark:backdrop-blur-sm">
-            <CardHeader className="text-center">
+          <Card className="border shadow-xl dark:bg-mdpc-brown-darkest/70 dark:backdrop-blur-sm">
+            <CardHeader className="text-center space-y-2">
+              <div className="w-24 h-24 mx-auto bg-gradient-to-r from-mdpc-gold to-mdpc-gold-dark rounded-full flex items-center justify-center shadow-gold-glow mb-2">
+                <User className="h-12 w-12 text-white" />
+              </div>
               <CardTitle className="text-2xl text-mdpc-blue dark:text-mdpc-gold font-heading">Welcome to Midas Touch</CardTitle>
-              <CardDescription className="dark:text-mdpc-brown-light">Sign in to access your account and services</CardDescription>
+              <CardDescription className="dark:text-mdpc-brown-light">Access your account to manage project requests and consultations</CardDescription>
             </CardHeader>
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid grid-cols-2">
+              <TabsList className="grid grid-cols-2 w-full">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
@@ -117,7 +121,10 @@ const Auth = () => {
                 <form onSubmit={handleSignIn}>
                   <CardContent className="space-y-4 pt-6">
                     <div className="space-y-2">
-                      <label htmlFor="email" className="text-sm font-medium dark:text-mdpc-brown-light">Email</label>
+                      <label htmlFor="email" className="flex items-center gap-2 text-sm font-medium dark:text-mdpc-brown-light">
+                        <Mail className="h-4 w-4 text-mdpc-gold" />
+                        Email
+                      </label>
                       <Input
                         id="email"
                         type="email"
@@ -129,7 +136,10 @@ const Auth = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="password" className="text-sm font-medium dark:text-mdpc-brown-light">Password</label>
+                      <label htmlFor="password" className="flex items-center gap-2 text-sm font-medium dark:text-mdpc-brown-light">
+                        <Lock className="h-4 w-4 text-mdpc-gold" />
+                        Password
+                      </label>
                       <Input
                         id="password"
                         type="password"
@@ -190,7 +200,10 @@ const Auth = () => {
                 <form onSubmit={handleSignUp}>
                   <CardContent className="space-y-4 pt-6">
                     <div className="space-y-2">
-                      <label htmlFor="signup-email" className="text-sm font-medium dark:text-mdpc-brown-light">Email</label>
+                      <label htmlFor="signup-email" className="flex items-center gap-2 text-sm font-medium dark:text-mdpc-brown-light">
+                        <Mail className="h-4 w-4 text-mdpc-gold" />
+                        Email
+                      </label>
                       <Input
                         id="signup-email"
                         type="email"
@@ -202,7 +215,10 @@ const Auth = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="signup-password" className="text-sm font-medium dark:text-mdpc-brown-light">Password</label>
+                      <label htmlFor="signup-password" className="flex items-center gap-2 text-sm font-medium dark:text-mdpc-brown-light">
+                        <Lock className="h-4 w-4 text-mdpc-gold" />
+                        Password
+                      </label>
                       <Input
                         id="signup-password"
                         type="password"
@@ -260,6 +276,9 @@ const Auth = () => {
                 </form>
               </TabsContent>
             </Tabs>
+            <div className="pb-6 px-6 text-center text-sm text-muted-foreground">
+              <p>By signing in, you agree to our <a href="#" className="underline text-mdpc-blue dark:text-mdpc-gold">Terms of Service</a> and <a href="#" className="underline text-mdpc-blue dark:text-mdpc-gold">Privacy Policy</a>.</p>
+            </div>
           </Card>
         </motion.div>
       </main>

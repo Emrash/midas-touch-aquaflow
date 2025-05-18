@@ -82,6 +82,9 @@ const Navbar = () => {
           <NavLink to="/" active={isActive("/")}>
             Home
           </NavLink>
+          <NavLink to="/services" active={isActive("/services")}>
+            Services
+          </NavLink>
           <NavLink to="/drilling" active={isActive("/drilling")}>
             Drilling
           </NavLink>
@@ -140,7 +143,7 @@ const Navbar = () => {
                 : "bg-white/10 hover:bg-white/20 border border-white/30"
             } text-white font-medium`}
           >
-            Get a Quote
+            Request Consultation
           </Button>
         </nav>
 
@@ -173,6 +176,9 @@ const Navbar = () => {
           <div className="flex flex-col space-y-2">
             <MobileNavLink to="/" active={isActive("/")}>
               Home
+            </MobileNavLink>
+            <MobileNavLink to="/services" active={isActive("/services")}>
+              Services
             </MobileNavLink>
             <MobileNavLink to="/drilling" active={isActive("/drilling")}>
               Drilling
@@ -210,7 +216,7 @@ const Navbar = () => {
             )}
             
             <Button onClick={handleGetQuote} className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-medium mt-2">
-              Get a Quote
+              Request Consultation
             </Button>
           </div>
         </div>
@@ -226,7 +232,14 @@ interface NavLinkProps {
 }
 
 const NavLink = ({ to, active, children }: NavLinkProps) => (
-  <Link to={to} className={`nav-link ${active ? "active" : ""}`}>
+  <Link 
+    to={to} 
+    className={`py-2 px-3 rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-mdpc-brown-dark/20 ${
+      active 
+        ? "text-mdpc-blue dark:text-mdpc-gold font-medium" 
+        : "text-mdpc-brown-dark dark:text-mdpc-brown-light"
+    }`}
+  >
     {children}
   </Link>
 );

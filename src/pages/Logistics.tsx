@@ -1,18 +1,44 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import Map from "../components/ui/Map";
+import FleetGallery from "../components/logistics/FleetGallery";
+import { useConsultation } from "@/contexts/ConsultationContext";
+import { Link } from "react-router-dom";
 
 const Logistics = () => {
+  const { openModal } = useConsultation();
+  const [isFleetGalleryOpen, setIsFleetGalleryOpen] = useState(false);
+  
   useEffect(() => {
     // Set title
     document.title = "Logistics Services | Midas Touch Drills and Projects Consult";
     
     // Scroll to top
     window.scrollTo(0, 0);
+    
+    // Disable map scroll zoom by default (fix map scroll lock issue)
+    const handleMapInteraction = () => {
+      const maps = document.querySelectorAll('.leaflet-container');
+      maps.forEach(map => {
+        // Map will be initialized with wheel zoom disabled
+        // This is handled in the Map component
+      });
+    };
+    
+    // Wait for map to be rendered
+    setTimeout(handleMapInteraction, 1000);
   }, []);
+
+  const handleContactLogistics = () => {
+    openModal(
+      'logistics', 
+      'Contact Logistics Team', 
+      "Tell us about your logistics needs and our team will get back to you within 24 hours."
+    );
+  };
 
   return (
     <div className="min-h-screen">
@@ -32,8 +58,15 @@ const Logistics = () => {
                 Reliable transportation and logistics services for water systems, drilling equipment, 
                 and construction materials across Nigeria.
               </p>
-              <Button className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-semibold py-3 px-8 text-lg">
-                Get a Quote
+              <Button 
+                onClick={() => openModal(
+                  'logistics', 
+                  'Request Logistics Quote', 
+                  "Tell us about your logistics requirements and we'll provide a competitive quote."
+                )}
+                className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-semibold py-3 px-8 text-lg"
+              >
+                Request a Quote
               </Button>
             </div>
           </div>
@@ -133,7 +166,10 @@ const Logistics = () => {
                     </div>
                   </li>
                 </ul>
-                <Button className="mt-6 bg-mdpc-blue hover:bg-mdpc-blue-dark text-white">
+                <Button 
+                  className="mt-6 bg-mdpc-blue hover:bg-mdpc-blue-dark text-white"
+                  onClick={() => setIsFleetGalleryOpen(true)}
+                >
                   View Our Fleet
                 </Button>
               </div>
@@ -230,15 +266,41 @@ const Logistics = () => {
               Contact our logistics team today to discuss your transportation needs and get a customized quote.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-semibold py-3 px-8 text-lg">
-                Get a Quote
+              <Button 
+                onClick={() => openModal(
+                  'logistics', 
+                  'Request Logistics Quote', 
+                  "Tell us about your logistics requirements and we'll provide a competitive quote."
+                )}
+                className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-semibold py-3 px-8 text-lg"
+              >
+                Request Quote
               </Button>
-              <Button className="bg-white hover:bg-gray-100 text-mdpc-blue font-semibold py-3 px-8 text-lg">
+              <Button 
+                onClick={handleContactLogistics}
+                className="bg-white hover:bg-gray-100 text-mdpc-blue font-semibold py-3 px-8 text-lg"
+              >
                 Contact Logistics Team
               </Button>
             </div>
           </div>
         </section>
+        
+        {/* Fleet Gallery Modal */}
+        <FleetGallery 
+          isOpen={isFleetGalleryOpen} 
+          onClose={() => {
+            setIsFleetGalleryOpen(false);
+            // If user closed the gallery to get a quote, open the consultation modal
+            if (window.confirm("Would you like to request a logistics quote?")) {
+              openModal(
+                'logistics', 
+                'Request Logistics Quote', 
+                "Tell us about your logistics requirements and we'll provide a competitive quote."
+              );
+            }
+          }} 
+        />
       </main>
       <Footer />
     </div>

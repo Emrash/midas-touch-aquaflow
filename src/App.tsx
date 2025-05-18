@@ -15,6 +15,8 @@ import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import ProjectDetails from "./pages/ProjectDetails";
 import Logistics from "./pages/Logistics";
+import Services from "./pages/Services";
+import ServiceDetail from "./pages/services/ServiceDetail";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -59,6 +61,12 @@ const App = () => (
               <Route path="/projects/:id" element={<ProjectDetails />} />
               <Route path="/logistics" element={<Logistics />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/login" element={<Navigate to="/auth" />} />
+              <Route path="/register" element={<Navigate to="/auth" />} />
+              
+              {/* Services Routes */}
+              <Route path="/services" element={<Services />} />
+              <Route path="/services/:serviceId" element={<ServiceDetail />} />
               
               {/* Multi-domain Routes */}
               <Route path="/drilling" element={<DrillingHome />} />

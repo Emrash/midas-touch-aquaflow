@@ -1,128 +1,144 @@
 
-import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef } from 'react';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIconGold from 'leaflet/dist/images/marker-icon.png'; // Replace with actual gold icon when available
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { toast } from "@/hooks/use-toast";
 
-export interface MapProps {
-  center: [number, number]; // Latitude and longitude
+// Fix marker icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Custom gold icon for main locations
+const goldIcon = new L.Icon({
+  iconUrl: markerIconGold,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+  className: 'gold-marker' // This class can be styled with CSS
+});
+
+interface MarkerData {
+  position: [number, number];
+  popup: string;
+  isMain?: boolean;
+}
+
+interface MapProps {
+  center: [number, number];
   zoom: number;
-  markers: {
-    position: [number, number];
-    popup: string;
-    isMain?: boolean;
-  }[];
+  markers?: MarkerData[];
   height?: string;
 }
 
-const Map = ({ center, zoom = 10, markers, height = "400px" }: MapProps) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const [isInteracting, setIsInteracting] = useState(false);
+const Map = ({ center, zoom, markers, height = '400px' }: MapProps) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const leafletMapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapRef.current) return;
 
-    // Only initialize map once
-    if (!mapInstanceRef.current) {
-      // Create map
-      mapInstanceRef.current = L.map(mapContainer.current, {
-        scrollWheelZoom: false,  // Disable scroll wheel zoom by default
-        dragging: true,           // Allow dragging
-        tap: false                // Disable tap handler for mobile
-      }).setView(center, zoom);
-
-      // Add tile layer
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(mapInstanceRef.current);
-
-      // Add markers
-      markers.forEach((marker) => {
-        const icon = marker.isMain 
-          ? new L.Icon({
-              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
-              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-              iconSize: [25, 41],
-              iconAnchor: [12, 41],
-              popupAnchor: [1, -34],
-              shadowSize: [41, 41]
-            })
-          : new L.Icon({
-              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-              iconSize: [25, 41],
-              iconAnchor: [12, 41],
-              popupAnchor: [1, -34],
-              shadowSize: [41, 41]
-            });
-
-        L.marker(marker.position, { icon: icon })
-          .addTo(mapInstanceRef.current!)
-          .bindPopup(marker.popup);
-      });
-
-      // Add navigation controls
-      L.control.zoom({
-        position: 'bottomright'
-      }).addTo(mapInstanceRef.current);
-
-      // Event handlers for enabling/disabling scroll zoom
-      mapInstanceRef.current.on('click', function() {
-        if (!mapInstanceRef.current!.scrollWheelZoom.enabled()) {
-          mapInstanceRef.current!.scrollWheelZoom.enable();
-          setIsInteracting(true);
-        }
-      });
-
-      // Disable scroll zoom when user clicks outside the map
-      document.addEventListener('click', function(e) {
-        if (mapContainer.current && !mapContainer.current.contains(e.target as Node) && mapInstanceRef.current) {
-          mapInstanceRef.current.scrollWheelZoom.disable();
-          setIsInteracting(false);
-        }
+    try {
+      // Create map instance
+      const map = L.map(mapRef.current, {
+        center: new L.LatLng(center[0], center[1]),
+        zoom: zoom,
+        scrollWheelZoom: false // Disable scroll wheel zoom by default
       });
       
-      // Disable scroll zoom when map loses focus
-      mapInstanceRef.current.on('blur', function() {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.scrollWheelZoom.disable();
-          setIsInteracting(false);
-        }
-      });
-    } else {
-      // Update map view if center or zoom changed
-      mapInstanceRef.current.setView(center, zoom);
-    }
+      leafletMapRef.current = map;
 
-    return () => {
-      // Clean up if component unmounts
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
+      // Add OpenStreetMap tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      // Add markers if provided
+      if (markers && markers.length > 0) {
+        markers.forEach(markerData => {
+          const { position, popup, isMain } = markerData;
+          
+          // Create marker with proper icon
+          const marker = L.marker(new L.LatLng(position[0], position[1]), { 
+            icon: isMain ? goldIcon : new L.Icon.Default()
+          })
+          .addTo(map)
+          .bindPopup(popup);
+          
+          // Apply CSS class for main markers for additional styling
+          if (isMain && marker.getElement()) {
+            marker.getElement().classList.add('main-marker-element');
+          }
+        });
       }
-    };
+      
+      // Enable scrolling only on map click
+      map.on('click', function() {
+        map.scrollWheelZoom.enable();
+        toast({
+          title: "Map zooming enabled",
+          description: "Click outside the map to disable zooming",
+          duration: 2000
+        });
+      });
+      
+      // Disable scrolling when mouse leaves map or when focus is lost
+      map.on('mouseout', function() {
+        map.scrollWheelZoom.disable();
+      });
+      
+      map.on('blur', function() {
+        map.scrollWheelZoom.disable();
+      });
+      
+      // Handle touch events for mobile
+      if ('ontouchstart' in window) {
+        map.on('touchstart', function() {
+          map.scrollWheelZoom.enable();
+        });
+        
+        // Add tap listener to document to disable zoom when tapping outside map
+        document.addEventListener('touchstart', function(e) {
+          if (!mapRef.current?.contains(e.target as Node)) {
+            map.scrollWheelZoom.disable();
+          }
+        });
+      }
+
+      // Clean up on unmount
+      return () => {
+        // Remove event listeners
+        document.removeEventListener('touchstart', () => {});
+        
+        if (map) {
+          map.remove();
+        }
+      };
+    } catch (error) {
+      console.error("Error initializing map:", error);
+    }
   }, [center, zoom, markers]);
 
   return (
-    <div className="relative">
-      <div 
-        ref={mapContainer} 
-        className="rounded-lg overflow-hidden border border-gray-200 dark:border-mdpc-brown-dark/30 shadow-md" 
-        style={{ height }}
-      ></div>
-      {isInteracting && (
-        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/70 text-white text-xs px-3 py-1 rounded-full">
-          Map active - scrolling enabled
-        </div>
-      )}
-      {!isInteracting && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-black/70 text-white text-sm px-4 py-2 rounded-full">
-            Click to activate map
-          </div>
-        </div>
-      )}
+    <div 
+      ref={mapRef}
+      style={{ height, width: '100%' }} 
+      className="map-container relative"
+    >
+      <div className="absolute bottom-2 left-2 z-[1000] bg-white/70 backdrop-blur-sm py-1 px-2 rounded text-xs text-mdpc-brown-dark pointer-events-none">
+        Click map to enable scrolling
+      </div>
     </div>
   );
 };

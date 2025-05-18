@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import { Button } from './button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './dialog';
 import { Input } from './input';
@@ -8,6 +7,9 @@ import { Label } from './label';
 import { Textarea } from './textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface ConsultationModalProps {
   isOpen: boolean;
@@ -24,9 +26,10 @@ const ConsultationModal = ({
   description = "Fill in your details and we'll get back to you within 24 hours.",
   serviceType = 'general'
 }: ConsultationModalProps) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: user?.displayName || '',
+    email: user?.email || '',
     phone: '',
     service: serviceType === 'general' ? '' : serviceType,
     message: ''
@@ -43,8 +46,19 @@ const ConsultationModal = ({
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save to Firestore
+      await addDoc(collection(db, "consultationRequests"), {
+        fullName: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        userId: user?.uid || "guest",
+        serviceType: formData.service || serviceType || "general",
+        requestDetails: {
+          message: formData.message,
+        },
+        status: "pending",
+        createdAt: serverTimestamp(),
+      });
       
       console.log('Form submitted:', formData);
       toast({
@@ -53,8 +67,8 @@ const ConsultationModal = ({
       });
       
       setFormData({
-        name: '',
-        email: '',
+        name: user?.displayName || '',
+        email: user?.email || '',
         phone: '',
         service: serviceType === 'general' ? '' : serviceType,
         message: ''

@@ -4,47 +4,47 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { collection, onSnapshot, doc, updateDoc, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, query, orderBy, Timestamp, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 // Define types for service requests
 type RequestStatus = "pending" | "in-progress" | "completed";
 
 interface BaseRequest {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   phone: string;
   status: RequestStatus;
-  createdAt: any;
+  createdAt: Timestamp;
   userId: string;
-  message?: string;
-}
-
-interface DrillingRequest extends BaseRequest {
-  location: string;
   serviceType: string;
-}
-
-interface LogisticsRequest extends BaseRequest {
-  pickupLocation: string;
-  deliveryLocation: string;
-  serviceType: string;
-  cargoDescription?: string;
-  deliveryDate?: string;
+  requestDetails: {
+    message?: string;
+    [key: string]: any;
+  };
+  adminNotes?: string;
 }
 
 const AdminDashboard = () => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [drillingRequests, setDrillingRequests] = useState<DrillingRequest[]>([]);
-  const [logisticsRequests, setLogisticsRequests] = useState<LogisticsRequest[]>([]);
+  const [drillingRequests, setDrillingRequests] = useState<BaseRequest[]>([]);
+  const [logisticsRequests, setLogisticsRequests] = useState<BaseRequest[]>([]);
+  const [consultationRequests, setConsultationRequests] = useState<BaseRequest[]>([]);
   const [filter, setFilter] = useState<RequestStatus | "all">("all");
+  
+  // For admin notes dialog
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [currentRequest, setCurrentRequest] = useState<{id: string, collectionName: string, notes: string} | null>(null);
+  const [adminNotes, setAdminNotes] = useState("");
   
   useEffect(() => {
     document.title = "Admin Dashboard | Midas Touch";
@@ -52,25 +52,26 @@ const AdminDashboard = () => {
     // Redirect if not admin
     if (!isAdmin) {
       navigate("/");
+      return;
     }
 
     // Fetch drilling requests
     const drillingQuery = query(collection(db, "drillingRequests"), orderBy("createdAt", "desc"));
     const unsubscribeDrilling = onSnapshot(drillingQuery, (snapshot) => {
-      const requests: DrillingRequest[] = [];
+      const requests: BaseRequest[] = [];
       snapshot.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() as Omit<BaseRequest, 'id'>;
         requests.push({
           id: doc.id,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          location: data.location,
-          serviceType: data.serviceType,
-          status: data.status,
+          fullName: data.fullName || data.name || "Unknown",
+          email: data.email || "",
+          phone: data.phone || "",
+          serviceType: data.serviceType || "drilling",
+          requestDetails: data.requestDetails || {},
+          status: data.status as RequestStatus,
           createdAt: data.createdAt,
           userId: data.userId,
-          message: data.message
+          adminNotes: data.adminNotes,
         });
       });
       setDrillingRequests(requests);
@@ -85,23 +86,20 @@ const AdminDashboard = () => {
     // Fetch logistics requests
     const logisticsQuery = query(collection(db, "logisticsRequests"), orderBy("createdAt", "desc"));
     const unsubscribeLogistics = onSnapshot(logisticsQuery, (snapshot) => {
-      const requests: LogisticsRequest[] = [];
+      const requests: BaseRequest[] = [];
       snapshot.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() as Omit<BaseRequest, 'id'>;
         requests.push({
           id: doc.id,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          pickupLocation: data.pickupLocation,
-          deliveryLocation: data.deliveryLocation,
-          serviceType: data.serviceType,
-          status: data.status,
+          fullName: data.fullName || data.name || "Unknown",
+          email: data.email || "",
+          phone: data.phone || "",
+          serviceType: data.serviceType || "logistics",
+          requestDetails: data.requestDetails || {},
+          status: data.status as RequestStatus,
           createdAt: data.createdAt,
           userId: data.userId,
-          cargoDescription: data.cargoDescription,
-          deliveryDate: data.deliveryDate,
-          message: data.message
+          adminNotes: data.adminNotes,
         });
       });
       setLogisticsRequests(requests);
@@ -113,15 +111,55 @@ const AdminDashboard = () => {
       });
     });
     
+    // Fetch consultation requests
+    const consultationQuery = query(collection(db, "consultationRequests"), orderBy("createdAt", "desc"));
+    const unsubscribeConsultation = onSnapshot(consultationQuery, (snapshot) => {
+      const requests: BaseRequest[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data() as Omit<BaseRequest, 'id'>;
+        requests.push({
+          id: doc.id,
+          fullName: data.fullName || data.name || "Unknown",
+          email: data.email || "",
+          phone: data.phone || "",
+          serviceType: data.serviceType || "consultation",
+          requestDetails: data.requestDetails || {},
+          status: data.status as RequestStatus,
+          createdAt: data.createdAt,
+          userId: data.userId,
+          adminNotes: data.adminNotes,
+        });
+      });
+      setConsultationRequests(requests);
+    }, (error) => {
+      console.error("Error fetching consultation requests: ", error);
+      toast({
+        title: "Error fetching consultation requests",
+        variant: "destructive"
+      });
+    });
+    
     return () => {
       unsubscribeDrilling();
       unsubscribeLogistics();
+      unsubscribeConsultation();
     };
   }, [isAdmin, navigate]);
 
-  const updateRequestStatus = async (collection: string, id: string, status: RequestStatus) => {
+  const updateRequestStatus = async (collectionName: string, id: string, status: RequestStatus) => {
     try {
-      await updateDoc(doc(db, collection, id), { status });
+      await updateDoc(doc(db, collectionName, id), { status });
+      
+      // Also add a status update to the updates collection
+      await addDoc(collection(db, "statusUpdates"), {
+        requestId: id,
+        collectionName: collectionName,
+        status: status,
+        updatedAt: Timestamp.now(),
+        updatedBy: user?.email || "Admin",
+        message: `Status updated to ${status}`
+      });
+      
       toast({
         title: "Status updated",
         description: `Request status updated to ${status}`
@@ -130,6 +168,35 @@ const AdminDashboard = () => {
       console.error("Error updating request status: ", error);
       toast({
         title: "Error updating status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openNotesDialog = (id: string, collectionName: string, notes: string = "") => {
+    setCurrentRequest({ id, collectionName, notes });
+    setAdminNotes(notes);
+    setIsNotesOpen(true);
+  };
+
+  const saveAdminNotes = async () => {
+    if (!currentRequest) return;
+    
+    try {
+      await updateDoc(doc(db, currentRequest.collectionName, currentRequest.id), { 
+        adminNotes: adminNotes 
+      });
+      
+      toast({
+        title: "Notes saved",
+        description: "Admin notes have been saved successfully"
+      });
+      
+      setIsNotesOpen(false);
+    } catch (error) {
+      console.error("Error saving admin notes: ", error);
+      toast({
+        title: "Error saving notes",
         variant: "destructive"
       });
     }
@@ -161,20 +228,29 @@ const AdminDashboard = () => {
     }
   };
 
-  const getServiceTypeName = (type: string) => {
-    const serviceTypes: {[key: string]: string} = {
-      "borehole-drilling": "Borehole Drilling",
-      "geophysical-survey": "Geophysical Survey",
-      "water-treatment": "Water Treatment",
-      "pump-installation": "Pump Installation",
-      "borehole-maintenance": "Borehole Maintenance",
-      "bulky-delivery": "Bulky Delivery",
-      "doorstep-delivery": "Doorstep Delivery",
-      "express-delivery": "Express Delivery",
-      "water-equipment": "Water Equipment Transport",
-    };
-    
-    return serviceTypes[type] || type;
+  const getServiceTypeName = (request: BaseRequest) => {
+    if (request.serviceType === "drilling") {
+      const subType = request.requestDetails?.serviceSubType || "";
+      const serviceTypes: {[key: string]: string} = {
+        "borehole-drilling": "Borehole Drilling",
+        "geophysical-survey": "Geophysical Survey",
+        "water-treatment": "Water Treatment",
+        "pump-installation": "Pump Installation",
+        "borehole-maintenance": "Borehole Maintenance",
+      };
+      return serviceTypes[subType] || "Drilling";
+    } else if (request.serviceType === "logistics") {
+      const subType = request.requestDetails?.serviceSubType || "";
+      const serviceTypes: {[key: string]: string} = {
+        "bulky-delivery": "Bulky Delivery",
+        "doorstep-delivery": "Doorstep Delivery",
+        "express-delivery": "Express Delivery",
+        "water-equipment": "Water Equipment Transport",
+      };
+      return serviceTypes[subType] || "Logistics";
+    } else {
+      return request.serviceType || "Consultation";
+    }
   };
   
   const filteredDrillingRequests = filter === "all" 
@@ -184,6 +260,17 @@ const AdminDashboard = () => {
   const filteredLogisticsRequests = filter === "all" 
     ? logisticsRequests
     : logisticsRequests.filter(req => req.status === filter);
+    
+  const filteredConsultationRequests = filter === "all"
+    ? consultationRequests
+    : consultationRequests.filter(req => req.status === filter);
+
+  const allRequests = [...filteredDrillingRequests, ...filteredLogisticsRequests, ...filteredConsultationRequests];
+  
+  // Count all pending requests
+  const pendingRequestsCount = drillingRequests.filter(req => req.status === "pending").length +
+    logisticsRequests.filter(req => req.status === "pending").length +
+    consultationRequests.filter(req => req.status === "pending").length;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -213,27 +300,31 @@ const AdminDashboard = () => {
               <CardDescription>Total requests received</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-mdpc-gold">{drillingRequests.length + logisticsRequests.length}</p>
+              <p className="text-3xl font-bold text-mdpc-gold">{drillingRequests.length + logisticsRequests.length + consultationRequests.length}</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xl">Drilling Requests</CardTitle>
-              <CardDescription>Borehole and water services</CardDescription>
+              <CardTitle className="text-xl">Pending Requests</CardTitle>
+              <CardDescription>Awaiting your attention</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-mdpc-gold">{drillingRequests.length}</p>
+              <p className="text-3xl font-bold text-mdpc-gold">{pendingRequestsCount}</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xl">Logistics Requests</CardTitle>
-              <CardDescription>Transportation services</CardDescription>
+              <CardTitle className="text-xl">Completed Requests</CardTitle>
+              <CardDescription>Successfully fulfilled</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-mdpc-gold">{logisticsRequests.length}</p>
+              <p className="text-3xl font-bold text-mdpc-gold">
+                {drillingRequests.filter(req => req.status === "completed").length +
+                logisticsRequests.filter(req => req.status === "completed").length +
+                consultationRequests.filter(req => req.status === "completed").length}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -264,10 +355,11 @@ const AdminDashboard = () => {
                 <TabsTrigger value="all">All Requests</TabsTrigger>
                 <TabsTrigger value="drilling">Drilling</TabsTrigger>
                 <TabsTrigger value="logistics">Logistics</TabsTrigger>
+                <TabsTrigger value="consultation">Consultation</TabsTrigger>
               </TabsList>
               
               <TabsContent value="all" className="space-y-4">
-                {filteredDrillingRequests.length === 0 && filteredLogisticsRequests.length === 0 ? (
+                {allRequests.length === 0 ? (
                   <div className="bg-gray-100 p-8 text-center rounded-md">
                     <p className="text-gray-500">No service requests matching your filter</p>
                   </div>
@@ -286,7 +378,7 @@ const AdminDashboard = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {[...filteredDrillingRequests, ...filteredLogisticsRequests]
+                        {allRequests
                           .sort((a, b) => {
                             // Sort by creation date (newest first)
                             const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date();
@@ -294,18 +386,27 @@ const AdminDashboard = () => {
                             return dateB.getTime() - dateA.getTime();
                           })
                           .map(request => {
-                            const isDrilling = 'location' in request;
+                            const isDrilling = request.serviceType === "drilling";
+                            const isLogistics = request.serviceType === "logistics";
+                            const isConsultation = request.serviceType === "consultation" || (!isDrilling && !isLogistics);
+                            const collectionName = isDrilling ? "drillingRequests" : isLogistics ? "logisticsRequests" : "consultationRequests";
                             
                             return (
                               <TableRow key={request.id}>
                                 <TableCell className="whitespace-nowrap">{formatDate(request.createdAt)}</TableCell>
                                 <TableCell>
-                                  <Badge variant="outline" className={isDrilling ? "bg-mdpc-blue text-white" : "bg-mdpc-brown-dark text-white"}>
-                                    {isDrilling ? "Drilling" : "Logistics"}
+                                  <Badge variant="outline" className={
+                                    isDrilling 
+                                      ? "bg-mdpc-blue text-white" 
+                                      : isLogistics 
+                                        ? "bg-mdpc-brown-dark text-white"
+                                        : "bg-mdpc-gold text-white"
+                                  }>
+                                    {isDrilling ? "Drilling" : isLogistics ? "Logistics" : "Consultation"}
                                   </Badge>
                                 </TableCell>
-                                <TableCell>{request.name}</TableCell>
-                                <TableCell>{getServiceTypeName(request.serviceType)}</TableCell>
+                                <TableCell>{request.fullName}</TableCell>
+                                <TableCell>{getServiceTypeName(request)}</TableCell>
                                 <TableCell className="max-w-[150px] truncate">
                                   <div className="truncate">{request.email}</div>
                                   <div className="text-xs text-gray-500">{request.phone}</div>
@@ -317,22 +418,32 @@ const AdminDashboard = () => {
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
-                                  <Select 
-                                    value={request.status} 
-                                    onValueChange={(value: RequestStatus) => {
-                                      const collectionName = isDrilling ? "drillingRequests" : "logisticsRequests";
-                                      updateRequestStatus(collectionName, request.id, value);
-                                    }}
-                                  >
-                                    <SelectTrigger className="w-[130px]">
-                                      <SelectValue placeholder="Update status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="pending">Pending</SelectItem>
-                                      <SelectItem value="in-progress">In Progress</SelectItem>
-                                      <SelectItem value="completed">Completed</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                  <div className="flex items-center gap-2">
+                                    <Select 
+                                      value={request.status} 
+                                      onValueChange={(value: RequestStatus) => {
+                                        updateRequestStatus(collectionName, request.id, value);
+                                      }}
+                                    >
+                                      <SelectTrigger className="w-[130px]">
+                                        <SelectValue placeholder="Update status" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="in-progress">In Progress</SelectItem>
+                                        <SelectItem value="completed">Completed</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => openNotesDialog(request.id, collectionName, request.adminNotes)}
+                                      title="Add admin notes"
+                                    >
+                                      Notes {request.adminNotes ? "*" : ""}
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             );
@@ -366,9 +477,9 @@ const AdminDashboard = () => {
                         {filteredDrillingRequests.map(request => (
                           <TableRow key={request.id}>
                             <TableCell className="whitespace-nowrap">{formatDate(request.createdAt)}</TableCell>
-                            <TableCell>{request.name}</TableCell>
-                            <TableCell>{getServiceTypeName(request.serviceType)}</TableCell>
-                            <TableCell className="max-w-[150px] truncate">{request.location}</TableCell>
+                            <TableCell>{request.fullName}</TableCell>
+                            <TableCell>{getServiceTypeName(request)}</TableCell>
+                            <TableCell className="max-w-[150px] truncate">{request.requestDetails.location}</TableCell>
                             <TableCell>
                               <div className="truncate">{request.email}</div>
                               <div className="text-xs text-gray-500">{request.phone}</div>
@@ -380,21 +491,32 @@ const AdminDashboard = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Select 
-                                value={request.status} 
-                                onValueChange={(value: RequestStatus) => {
-                                  updateRequestStatus("drillingRequests", request.id, value);
-                                }}
-                              >
-                                <SelectTrigger className="w-[130px]">
-                                  <SelectValue placeholder="Update status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="in-progress">In Progress</SelectItem>
-                                  <SelectItem value="completed">Completed</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <div className="flex items-center gap-2">
+                                <Select 
+                                  value={request.status} 
+                                  onValueChange={(value: RequestStatus) => {
+                                    updateRequestStatus("drillingRequests", request.id, value);
+                                  }}
+                                >
+                                  <SelectTrigger className="w-[130px]">
+                                    <SelectValue placeholder="Update status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="in-progress">In Progress</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => openNotesDialog(request.id, "drillingRequests", request.adminNotes)}
+                                  title="Add admin notes"
+                                >
+                                  Notes {request.adminNotes ? "*" : ""}
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -427,11 +549,11 @@ const AdminDashboard = () => {
                         {filteredLogisticsRequests.map(request => (
                           <TableRow key={request.id}>
                             <TableCell className="whitespace-nowrap">{formatDate(request.createdAt)}</TableCell>
-                            <TableCell>{request.name}</TableCell>
-                            <TableCell>{getServiceTypeName(request.serviceType)}</TableCell>
+                            <TableCell>{request.fullName}</TableCell>
+                            <TableCell>{getServiceTypeName(request)}</TableCell>
                             <TableCell className="max-w-[150px]">
-                              <div className="truncate"><span className="text-xs font-medium">From:</span> {request.pickupLocation}</div>
-                              <div className="truncate"><span className="text-xs font-medium">To:</span> {request.deliveryLocation}</div>
+                              <div className="truncate"><span className="text-xs font-medium">From:</span> {request.requestDetails.pickupLocation}</div>
+                              <div className="truncate"><span className="text-xs font-medium">To:</span> {request.requestDetails.deliveryLocation}</div>
                             </TableCell>
                             <TableCell>
                               <div className="truncate">{request.email}</div>
@@ -444,21 +566,106 @@ const AdminDashboard = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Select 
-                                value={request.status} 
-                                onValueChange={(value: RequestStatus) => {
-                                  updateRequestStatus("logisticsRequests", request.id, value);
-                                }}
-                              >
-                                <SelectTrigger className="w-[130px]">
-                                  <SelectValue placeholder="Update status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="in-progress">In Progress</SelectItem>
-                                  <SelectItem value="completed">Completed</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <div className="flex items-center gap-2">
+                                <Select 
+                                  value={request.status} 
+                                  onValueChange={(value: RequestStatus) => {
+                                    updateRequestStatus("logisticsRequests", request.id, value);
+                                  }}
+                                >
+                                  <SelectTrigger className="w-[130px]">
+                                    <SelectValue placeholder="Update status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="in-progress">In Progress</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => openNotesDialog(request.id, "logisticsRequests", request.adminNotes)}
+                                  title="Add admin notes"
+                                >
+                                  Notes {request.adminNotes ? "*" : ""}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="consultation" className="space-y-4">
+                {filteredConsultationRequests.length === 0 ? (
+                  <div className="bg-gray-100 p-8 text-center rounded-md">
+                    <p className="text-gray-500">No consultation requests matching your filter</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Service</TableHead>
+                          <TableHead>Message</TableHead>
+                          <TableHead>Contact</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredConsultationRequests.map(request => (
+                          <TableRow key={request.id}>
+                            <TableCell className="whitespace-nowrap">{formatDate(request.createdAt)}</TableCell>
+                            <TableCell>{request.fullName}</TableCell>
+                            <TableCell>{getServiceTypeName(request)}</TableCell>
+                            <TableCell className="max-w-[150px] truncate">
+                              {request.requestDetails.message}
+                            </TableCell>
+                            <TableCell>
+                              <div className="truncate">{request.email}</div>
+                              <div className="text-xs text-gray-500">{request.phone}</div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStatusBadgeColor(request.status)}>
+                                {request.status === "in-progress" ? "In Progress" : 
+                                 request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Select 
+                                  value={request.status} 
+                                  onValueChange={(value: RequestStatus) => {
+                                    updateRequestStatus("consultationRequests", request.id, value);
+                                  }}
+                                >
+                                  <SelectTrigger className="w-[130px]">
+                                    <SelectValue placeholder="Update status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="in-progress">In Progress</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => openNotesDialog(request.id, "consultationRequests", request.adminNotes)}
+                                  title="Add admin notes"
+                                >
+                                  Notes {request.adminNotes ? "*" : ""}
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -470,19 +677,29 @@ const AdminDashboard = () => {
             </Tabs>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Contact Messages</CardTitle>
-            <CardDescription>Messages from website contact form</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-100 p-8 text-center rounded-md">
-              <p className="text-gray-500">No messages received yet</p>
-            </div>
-          </CardContent>
-        </Card>
       </main>
+      
+      {/* Admin Notes Dialog */}
+      <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Admin Notes</DialogTitle>
+            <DialogDescription>Add private notes about this service request</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Textarea
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              placeholder="Add your notes here..."
+              rows={5}
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsNotesOpen(false)}>Cancel</Button>
+            <Button onClick={saveAdminNotes}>Save Notes</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

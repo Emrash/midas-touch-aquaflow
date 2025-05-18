@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ const DrillingRequestForm = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    name: user?.displayName || "",
     email: user?.email || "",
     phone: "",
     location: "",
@@ -53,35 +54,47 @@ const DrillingRequestForm = () => {
     try {
       // Save to Firestore
       const docRef = await addDoc(collection(db, "drillingRequests"), {
-        ...formData,
+        fullName: formData.name,
+        email: formData.email,
+        phone: formData.phone,
         userId: user?.uid || "guest",
+        serviceType: "drilling",
+        requestDetails: {
+          serviceSubType: formData.serviceType,
+          message: formData.message,
+          location: formData.location,
+        },
         status: "pending",
         createdAt: serverTimestamp(),
       });
       
       // Send email notification
-      await sendServiceRequestNotification(
-        "drilling",
-        formData.name,
-        formData.email,
-        {
-          phone: formData.phone,
-          location: formData.location,
-          serviceType: formData.serviceType,
-          message: formData.message,
-          requestId: docRef.id
-        }
-      );
+      try {
+        await sendServiceRequestNotification(
+          "drilling",
+          formData.name,
+          formData.email,
+          {
+            phone: formData.phone,
+            location: formData.location,
+            serviceType: formData.serviceType,
+            message: formData.message,
+            requestId: docRef.id
+          }
+        );
+      } catch (emailError) {
+        console.error("Failed to send email notification:", emailError);
+      }
       
       // Show success message
       toast({
         title: "Request submitted successfully!",
-        description: "We will contact you shortly regarding your drilling service request.",
+        description: "Your request has been submitted. We'll be in touch soon.",
       });
       
       // Reset form
       setFormData({
-        name: "",
+        name: user?.displayName || "",
         email: user?.email || "",
         phone: "",
         location: "",

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -13,22 +12,19 @@ import { Clock, Calendar, FileText, User, MessageSquare, Settings, Phone, Mail, 
 import { toast } from "@/hooks/use-toast";
 import { updateProfile } from "firebase/auth";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { Badge } from "@/components/ui/badge";
 
-interface Request {
+// Define types for user requests
+interface BaseRequest {
   id: string;
-  date: string;
-  type: string;
-  status: string;
-  details?: string;
-}
-
-interface Appointment {
-  id: string;
-  date: string;
-  time: string;
-  type: string;
-  location?: string;
+  createdAt: any; // Firestore timestamp
+  status: "pending" | "in-progress" | "completed";
+  serviceType: string;
+  requestDetails?: {
+    [key: string]: any;
+  };
+  adminNotes?: string;
 }
 
 interface Message {
@@ -59,12 +55,10 @@ const UserDashboard = () => {
   const [savingProfile, setSavingProfile] = useState(false);
   
   // User data
-  const [requests, setRequests] = useState<Request[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [requests, setRequests] = useState<BaseRequest[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState({
     requests: true,
-    appointments: true,
     messages: true
   });
 
@@ -81,90 +75,80 @@ const UserDashboard = () => {
     setEmail(user.email || "");
     setPhoneNumber(user.phoneNumber || "");
     
-    // Fetch user data from Firestore
-    const fetchUserData = async () => {
-      if (!user.uid) return;
+    // Fetch user's service requests
+    if (user.uid) {
+      setLoading(prev => ({ ...prev, requests: true }));
       
-      try {
-        // Fetch requests
-        setLoading(prev => ({ ...prev, requests: true }));
+      // Set up listeners for all request collections
+      const collections = ["drillingRequests", "logisticsRequests", "consultationRequests"];
+      let allRequests: BaseRequest[] = [];
+      
+      collections.forEach(collectionName => {
         const requestsQuery = query(
-          collection(db, "requests"),
+          collection(db, collectionName),
           where("userId", "==", user.uid),
           orderBy("createdAt", "desc")
         );
-        const requestsSnapshot = await getDocs(requestsQuery);
         
-        const requestsData: Request[] = requestsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          date: new Date(doc.data().createdAt?.toDate()).toLocaleDateString(),
-          type: doc.data().type || "Service Request",
-          status: doc.data().status || "Pending",
-          details: doc.data().details
-        }));
-        setRequests(requestsData.length > 0 ? requestsData : [
-          {
-            id: "REQ-2025-001",
-            date: "May 15, 2025",
-            type: "Borehole Installation",
-            status: "In Progress"
-          },
-          {
-            id: "REQ-2025-002", 
-            date: "May 10, 2025",
-            type: "Water Treatment System",
-            status: "Quoted"
-          },
-          {
-            id: "REQ-2025-003",
-            date: "May 5, 2025",
-            type: "Logistics Request",
-            status: "Completed"
-          }
-        ]);
-        setLoading(prev => ({ ...prev, requests: false }));
-        
-        // Fetch appointments
-        setLoading(prev => ({ ...prev, appointments: true }));
-        const appointmentsQuery = query(
-          collection(db, "appointments"),
-          where("userId", "==", user.uid),
-          orderBy("date", "asc")
-        );
-        const appointmentsSnapshot = await getDocs(appointmentsQuery);
-        
-        const appointmentsData: Appointment[] = appointmentsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          date: new Date(doc.data().date?.toDate()).toLocaleDateString(),
-          time: doc.data().time || "12:00 PM",
-          type: doc.data().type || "Consultation",
-          location: doc.data().location
-        }));
-        setAppointments(appointmentsData.length > 0 ? appointmentsData : [
-          {
-            id: "APT-2025-001",
-            date: "May 20, 2025",
-            time: "10:00 AM",
-            type: "Site Inspection"
-          },
-          {
-            id: "APT-2025-002",
-            date: "May 25, 2025",
-            time: "2:00 PM",
-            type: "Project Discussion"
-          }
-        ]);
-        setLoading(prev => ({ ...prev, appointments: false }));
-        
-        // Fetch messages
-        setLoading(prev => ({ ...prev, messages: true }));
-        const messagesQuery = query(
-          collection(db, "messages"),
-          where("userId", "==", user.uid),
-          orderBy("date", "desc")
-        );
-        const messagesSnapshot = await getDocs(messagesQuery);
-        
+        onSnapshot(requestsQuery, (snapshot) => {
+          const newRequests = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              createdAt: data.createdAt,
+              status: data.status,
+              serviceType: collectionName === "drillingRequests" ? "drilling" : 
+                          collectionName === "logisticsRequests" ? "logistics" : "consultation",
+              requestDetails: data.requestDetails || {},
+              adminNotes: data.adminNotes
+            };
+          });
+          
+          // Update combined requests
+          allRequests = allRequests.filter(req => {
+            // Keep requests from other collections
+            return !newRequests.some(newReq => 
+              newReq.id === req.id && 
+              newReq.serviceType === req.serviceType
+            );
+          }).concat(newRequests);
+          
+          // Sort by date
+          allRequests.sort((a, b) => {
+            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date();
+            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date();
+            return dateB.getTime() - dateA.getTime();
+          });
+          
+          setRequests(allRequests);
+          setLoading(prev => ({ ...prev, requests: false }));
+        }, (error) => {
+          console.error(`Error fetching ${collectionName}:`, error);
+          setLoading(prev => ({ ...prev, requests: false }));
+        });
+      });
+      
+      // Fetch status updates
+      const statusUpdatesQuery = query(
+        collection(db, "statusUpdates"),
+        orderBy("updatedAt", "desc")
+      );
+      
+      onSnapshot(statusUpdatesQuery, (snapshot) => {
+        // Process status updates if needed
+      }, (error) => {
+        console.error("Error fetching status updates:", error);
+      });
+      
+      // Fetch messages
+      setLoading(prev => ({ ...prev, messages: true }));
+      const messagesQuery = query(
+        collection(db, "messages"),
+        where("userId", "==", user.uid),
+        orderBy("date", "desc")
+      );
+      
+      getDocs(messagesQuery).then(messagesSnapshot => {
         const messagesData: Message[] = messagesSnapshot.docs.map(doc => ({
           id: doc.id,
           date: new Date(doc.data().date?.toDate()).toLocaleDateString(),
@@ -173,42 +157,41 @@ const UserDashboard = () => {
           message: doc.data().message || "Welcome to Midas Touch! We're glad you're here.",
           read: doc.data().read || false
         }));
-        setMessages(messagesData.length > 0 ? messagesData : [
+        
+        if (messagesData.length > 0) {
+          setMessages(messagesData);
+        } else {
+          // Fallback messages if none in database
+          setMessages([
+            {
+              id: "MSG-001",
+              date: new Date().toLocaleDateString(),
+              from: "Midas Touch Support",
+              subject: "Welcome to Midas Touch",
+              message: "Thank you for creating an account with Midas Touch. We're excited to provide you with our premium water solutions services. Feel free to browse our offerings and request a consultation anytime!",
+              read: false
+            }
+          ]);
+        }
+        
+        setLoading(prev => ({ ...prev, messages: false }));
+      }).catch(error => {
+        console.error("Error fetching messages:", error);
+        setLoading(prev => ({ ...prev, messages: false }));
+        
+        // Set fallback messages
+        setMessages([
           {
             id: "MSG-001",
-            date: "May 16, 2025",
+            date: new Date().toLocaleDateString(),
             from: "Midas Touch Support",
             subject: "Welcome to Midas Touch",
             message: "Thank you for creating an account with Midas Touch. We're excited to provide you with our premium water solutions services. Feel free to browse our offerings and request a consultation anytime!",
             read: false
-          },
-          {
-            id: "MSG-002",
-            date: "May 17, 2025",
-            from: "Project Manager",
-            subject: "Your Recent Inquiry",
-            message: "We've received your inquiry about borehole drilling services. One of our representatives will get in touch with you shortly to discuss the details and schedule a site visit if needed.",
-            read: true
           }
         ]);
-        setLoading(prev => ({ ...prev, messages: false }));
-        
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        toast({
-          title: "Data Loading Error",
-          description: "We couldn't load your personal data. Please try again later.",
-          variant: "destructive"
-        });
-        setLoading({
-          requests: false,
-          appointments: false,
-          messages: false
-        });
-      }
-    };
-    
-    fetchUserData();
+      });
+    }
   }, [user, navigate]);
 
   const handleSaveProfile = async () => {
@@ -272,6 +255,58 @@ const UserDashboard = () => {
     });
   };
 
+  // Format date from Firestore timestamp
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return "N/A";
+    
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    } catch (error) {
+      return "Invalid date";
+    }
+  };
+
+  // Get service type display name
+  const getServiceTypeName = (request: BaseRequest) => {
+    if (request.serviceType === "drilling") {
+      const subType = request.requestDetails?.serviceSubType || "";
+      const serviceTypes: {[key: string]: string} = {
+        "borehole-drilling": "Borehole Drilling",
+        "geophysical-survey": "Geophysical Survey",
+        "water-treatment": "Water Treatment",
+        "pump-installation": "Pump Installation",
+        "borehole-maintenance": "Borehole Maintenance",
+      };
+      return serviceTypes[subType] || "Drilling Services";
+    } else if (request.serviceType === "logistics") {
+      const subType = request.requestDetails?.serviceSubType || "";
+      const serviceTypes: {[key: string]: string} = {
+        "bulky-delivery": "Bulky Item Delivery",
+        "doorstep-delivery": "Doorstep Delivery",
+        "express-delivery": "Express Delivery",
+        "water-equipment": "Water Equipment Transport",
+      };
+      return serviceTypes[subType] || "Logistics Services";
+    } else {
+      return request.requestDetails?.service || "Consultation";
+    }
+  };
+
+  // Get status badge color
+  const getStatusBadgeColor = (status: string) => {
+    switch(status) {
+      case "pending": return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+      case "in-progress": return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+      case "completed": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      default: return "bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-400";
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -305,12 +340,6 @@ const UserDashboard = () => {
                       <a href="#requests">
                         <FileText className="mr-2 h-4 w-4" />
                         My Requests
-                      </a>
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start dark:text-mdpc-brown-light dark:hover:bg-mdpc-brown-dark/20" asChild>
-                      <a href="#appointments">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        Appointments
                       </a>
                     </Button>
                     <Button variant="ghost" className="w-full justify-start dark:text-mdpc-brown-light dark:hover:bg-mdpc-brown-dark/20" asChild>
@@ -427,31 +456,62 @@ const UserDashboard = () => {
                   ) : requests.length > 0 ? (
                     <div className="space-y-4">
                       {requests.map((request) => (
-                        <div key={request.id} className="border rounded-lg p-4 dark:border-mdpc-brown-dark/30">
+                        <div key={`${request.serviceType}-${request.id}`} className="border rounded-lg p-4 dark:border-mdpc-brown-dark/30">
                           <div className="flex items-center justify-between">
                             <div>
-                              <h4 className="font-medium dark:text-white">{request.type}</h4>
+                              <h4 className="font-medium dark:text-white">
+                                {getServiceTypeName(request)}
+                                <Badge variant="outline" className={
+                                  request.serviceType === "drilling" 
+                                    ? "ml-2 bg-mdpc-blue text-white text-xs" 
+                                    : request.serviceType === "logistics" 
+                                    ? "ml-2 bg-mdpc-brown-dark text-white text-xs"
+                                    : "ml-2 bg-mdpc-gold text-white text-xs"
+                                }>
+                                  {request.serviceType.charAt(0).toUpperCase() + request.serviceType.slice(1)}
+                                </Badge>
+                              </h4>
                               <div className="flex items-center text-sm text-muted-foreground dark:text-mdpc-brown-light">
                                 <Clock className="h-3 w-3 mr-1" />
-                                <span>{request.date}</span>
+                                <span>{formatDate(request.createdAt)}</span>
                               </div>
                             </div>
                             <div>
-                              <span className={`inline-block px-3 py-1 text-xs rounded-full ${
-                                request.status === "Completed" 
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" 
-                                  : request.status === "In Progress"
-                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                                  : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
-                              }`}>
-                                {request.status}
+                              <span className={`inline-block px-3 py-1 text-xs rounded-full ${getStatusBadgeColor(request.status)}`}>
+                                {request.status === "in-progress" ? "In Progress" : 
+                                 request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                               </span>
                             </div>
                           </div>
-                          {request.details && (
-                            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                              {request.details}
-                            </p>
+                          
+                          {request.serviceType === "drilling" && (
+                            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                              <p><strong>Location:</strong> {request.requestDetails?.location || "N/A"}</p>
+                              {request.requestDetails?.message && (
+                                <p className="mt-1"><strong>Message:</strong> {request.requestDetails.message}</p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {request.serviceType === "logistics" && (
+                            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                              <p><strong>From:</strong> {request.requestDetails?.pickupLocation || "N/A"}</p>
+                              <p><strong>To:</strong> {request.requestDetails?.deliveryLocation || "N/A"}</p>
+                              {request.requestDetails?.deliveryDate && (
+                                <p className="mt-1"><strong>Delivery Date:</strong> {request.requestDetails.deliveryDate}</p>
+                              )}
+                              {request.requestDetails?.message && (
+                                <p className="mt-1"><strong>Message:</strong> {request.requestDetails.message}</p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {request.serviceType === "consultation" && (
+                            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                              {request.requestDetails?.message && (
+                                <p><strong>Message:</strong> {request.requestDetails.message}</p>
+                              )}
+                            </div>
                           )}
                         </div>
                       ))}
@@ -464,48 +524,6 @@ const UserDashboard = () => {
                   <Button variant="default" size="sm" className="w-full bg-mdpc-blue hover:bg-mdpc-blue-dark dark:bg-mdpc-gold dark:hover:bg-mdpc-gold-dark" 
                     onClick={() => navigate('/services')}>
                     Request New Service
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              {/* Appointments Section */}
-              <Card id="appointments" className="dark:bg-mdpc-brown-darkest/70 dark:border-mdpc-brown-dark/30">
-                <CardHeader>
-                  <CardTitle className="dark:text-mdpc-gold">My Appointments</CardTitle>
-                  <CardDescription className="dark:text-mdpc-brown-light">
-                    Scheduled meetings and site visits
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loading.appointments ? (
-                    <div className="py-8 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mdpc-gold mx-auto mb-2"></div>
-                      <p className="dark:text-mdpc-brown-light">Loading your appointments...</p>
-                    </div>
-                  ) : appointments.length > 0 ? (
-                    <div className="space-y-4">
-                      {appointments.map((appointment) => (
-                        <div key={appointment.id} className="border rounded-lg p-4 dark:border-mdpc-brown-dark/30">
-                          <h4 className="font-medium dark:text-white">{appointment.type}</h4>
-                          <div className="flex items-center text-sm text-muted-foreground dark:text-mdpc-brown-light mt-1">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            <span>{appointment.date} at {appointment.time}</span>
-                          </div>
-                          {appointment.location && (
-                            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                              Location: {appointment.location}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center py-8 text-muted-foreground dark:text-mdpc-brown-light">No upcoming appointments. Schedule a consultation to book an appointment.</p>
-                  )}
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" size="sm" className="w-full dark:border-mdpc-brown-dark/30 dark:text-mdpc-brown-light dark:hover:bg-mdpc-brown-dark/20">
-                    View Calendar
                   </Button>
                 </CardFooter>
               </Card>

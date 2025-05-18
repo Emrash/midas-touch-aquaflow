@@ -109,7 +109,7 @@ const HeroSection = () => {
   };
 
   const handleContactRequest = () => {
-    openModal('general', 'Request a Consultation', 'Tell us about your project needs and we'll get back to you within 24 hours.');
+    openModal('general', 'Request a Consultation', "Tell us about your project needs and we'll get back to you within 24 hours.");
   };
 
   const scrollToContact = () => {

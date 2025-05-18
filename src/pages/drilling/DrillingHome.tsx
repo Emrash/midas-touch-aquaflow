@@ -51,11 +51,11 @@ const DrillingHome = () => {
   }, []);
 
   const handleRequestService = () => {
-    openModal('drilling', 'Request Drilling Services', 'Tell us about your drilling project needs and we'll get back to you within 24 hours.');
+    openModal('drilling', 'Request Drilling Services', "Tell us about your drilling project needs and we'll get back to you within 24 hours.");
   };
 
   const handleGetQuote = () => {
-    openModal('drilling', 'Get a Drilling Quote', 'Fill in the details below and we'll provide you with a detailed quote for your project.');
+    openModal('drilling', 'Get a Drilling Quote', "Fill in the details below and we'll provide you with a detailed quote for your project.");
   };
 
   const staggerContainerVariants = {

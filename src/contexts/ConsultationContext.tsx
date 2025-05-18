@@ -18,12 +18,12 @@ export const ConsultationProvider = ({ children }: { children: ReactNode }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType>('general');
   const [modalTitle, setModalTitle] = useState('Request a Consultation');
-  const [modalDescription, setModalDescription] = useState('Fill in your details and we'll get back to you within 24 hours.');
+  const [modalDescription, setModalDescription] = useState("Fill in your details and we'll get back to you within 24 hours.");
 
   const openModal = (
     service: ServiceType = 'general',
     title = 'Request a Consultation',
-    description = 'Fill in your details and we'll get back to you within 24 hours.'
+    description = "Fill in your details and we'll get back to you within 24 hours."
   ) => {
     setServiceType(service);
     setModalTitle(title);

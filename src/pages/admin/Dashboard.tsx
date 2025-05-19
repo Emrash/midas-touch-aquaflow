@@ -10,8 +10,10 @@ import { db } from "@/lib/firebase";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Send, MessageSquare } from "lucide-react";
 
 // Define types for service requests
 type RequestStatus = "pending" | "in-progress" | "completed";
@@ -60,6 +62,13 @@ const AdminDashboard = () => {
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [currentRequest, setCurrentRequest] = useState<{id: string, collectionName: string, notes: string} | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
+  
+  // For messaging dialog
+  const [isMessageOpen, setIsMessageOpen] = useState(false);
+  const [messageRecipient, setMessageRecipient] = useState<{id: string, name: string, email: string} | null>(null);
+  const [messageSubject, setMessageSubject] = useState("");
+  const [messageText, setMessageText] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
   
   useEffect(() => {
     document.title = "Admin Dashboard | Midas Touch";
@@ -214,6 +223,53 @@ const AdminDashboard = () => {
         title: "Error saving notes",
         variant: "destructive"
       });
+    }
+  };
+
+  const openMessageDialog = (userId: string, fullName: string, email: string) => {
+    setMessageRecipient({
+      id: userId,
+      name: fullName || "Client",
+      email: email || ""
+    });
+    setMessageSubject(`Update on your service request`);
+    setMessageText("");
+    setIsMessageOpen(true);
+  };
+
+  const sendMessage = async () => {
+    if (!messageRecipient || !messageText.trim()) return;
+    
+    setSendingMessage(true);
+    try {
+      // Create a new message document
+      await addDoc(collection(db, "messages"), {
+        sender: user?.email || "Midas Touch Admin",
+        recipientId: messageRecipient.id,
+        subject: messageSubject || "Update from Midas Touch",
+        message: messageText,
+        timestamp: Timestamp.now(),
+        read: false
+      });
+      
+      toast({
+        title: "Message Sent",
+        description: `Message sent to ${messageRecipient.name}`,
+      });
+      
+      setIsMessageOpen(false);
+      setMessageText("");
+      setMessageSubject("");
+      setMessageRecipient(null);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error Sending Message",
+        description: "There was a problem sending your message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -450,14 +506,27 @@ const AdminDashboard = () => {
                                       </SelectContent>
                                     </Select>
                                     
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      onClick={() => openNotesDialog(request.id, collectionName, request.adminNotes)}
-                                      title="Add admin notes"
-                                    >
-                                      Notes {request.adminNotes ? "*" : ""}
-                                    </Button>
+                                    <div className="flex gap-1">
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => openNotesDialog(request.id, collectionName, request.adminNotes)}
+                                        title="Add admin notes"
+                                      >
+                                        Notes {request.adminNotes ? "*" : ""}
+                                      </Button>
+                                      
+                                      <Button 
+                                        variant="default" 
+                                        size="sm"
+                                        className="bg-mdpc-blue text-white hover:bg-mdpc-blue-dark"
+                                        onClick={() => openMessageDialog(request.userId, request.fullName, request.email)}
+                                        title="Send message to client"
+                                      >
+                                        <MessageSquare className="h-4 w-4 mr-1" />
+                                        Message
+                                      </Button>
+                                    </div>
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -713,6 +782,56 @@ const AdminDashboard = () => {
             <Button variant="outline" onClick={() => setIsNotesOpen(false)}>Cancel</Button>
             <Button onClick={saveAdminNotes}>Save Notes</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Message Dialog */}
+      <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Message to Client</DialogTitle>
+            <DialogDescription>
+              {messageRecipient && (
+                <span>Sending to: <b>{messageRecipient.name}</b> ({messageRecipient.email})</span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Subject</label>
+              <Input
+                value={messageSubject}
+                onChange={(e) => setMessageSubject(e.target.value)}
+                placeholder="Message subject..."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Message</label>
+              <Textarea
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Type your message here..."
+                rows={5}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsMessageOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={sendMessage} 
+              disabled={sendingMessage || !messageText.trim()}
+              className="bg-mdpc-blue text-white hover:bg-mdpc-blue-dark"
+            >
+              {sendingMessage ? (
+                <>Sending...</>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-1" />
+                  Send Message
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

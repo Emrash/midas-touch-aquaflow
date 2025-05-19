@@ -27,6 +27,9 @@ interface BaseRequest {
     [key: string]: any;
   };
   adminNotes?: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
 }
 
 interface Message {
@@ -105,7 +108,10 @@ const UserDashboard = () => {
               serviceType: collectionName === "drillingRequests" ? "drilling" : 
                           collectionName === "logisticsRequests" ? "logistics" : "consultation",
               requestDetails: data.requestDetails || {},
-              adminNotes: data.adminNotes
+              adminNotes: data.adminNotes,
+              fullName: data.fullName || user.displayName || "Anonymous",
+              email: data.email || user.email || "",
+              phone: data.phone || ""
             };
           });
           

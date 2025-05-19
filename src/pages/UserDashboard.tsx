@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { Clock, Calendar, FileText, User, MessageSquare, Settings, Phone, Mail, Save, X, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { updateProfile } from "firebase/auth";
-import { db, logQuery } from "@/lib/firebase";
+import { db, logQuery, createSafeQuery, createMessagesQuery } from "@/lib/firebase";
 import { collection, getDocs, query, where, orderBy, onSnapshot, Timestamp, doc, updateDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,6 +69,8 @@ const UserDashboard = () => {
   });
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [messageError, setMessageError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -86,112 +88,163 @@ const UserDashboard = () => {
     // Fetch user's service requests
     if (user.uid) {
       setLoading(prev => ({ ...prev, requests: true }));
+      setRequestError(null);
       
       // Set up listeners for all request collections
       const collections = ["drillingRequests", "logisticsRequests", "consultationRequests"];
       let allRequests: BaseRequest[] = [];
+      let completedCollections = 0;
       
       collections.forEach(collectionName => {
         // Log the query to help with debugging
         logQuery(collectionName, { userId: user.uid });
         
-        const requestsQuery = query(
-          collection(db, collectionName),
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "desc")
-        );
-        
-        onSnapshot(requestsQuery, (snapshot) => {
-          console.log(`${collectionName} snapshot:`, snapshot.size, "documents");
+        try {
+          // Use our safer query creation method
+          let requestsQuery;
           
-          const newRequests = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              createdAt: data.createdAt,
-              status: data.status,
-              serviceType: collectionName === "drillingRequests" ? "drilling" : 
-                          collectionName === "logisticsRequests" ? "logistics" : "consultation",
-              requestDetails: data.requestDetails || {},
-              adminNotes: data.adminNotes,
-              fullName: data.fullName || user.displayName || "Anonymous",
-              email: data.email || user.email || "",
-              phone: data.phone || ""
-            };
-          });
-          
-          // Update combined requests
-          allRequests = allRequests.filter(req => {
-            // Keep requests from other collections
-            return !newRequests.some(newReq => 
-              newReq.id === req.id && 
-              newReq.serviceType === req.serviceType
+          // For testing purposes, we'll try different approaches for different collections
+          if (collectionName === "consultationRequests") {
+            // For consultation requests, use the simpler query without ordering first
+            const collectionRef = collection(db, collectionName);
+            requestsQuery = query(
+              collectionRef,
+              where("userId", "==", user.uid)
             );
-          }).concat(newRequests);
+          } else {
+            // For other collections, use our helper
+            requestsQuery = createSafeQuery(collectionName, user.uid);
+          }
           
-          // Sort by date
-          allRequests.sort((a, b) => {
-            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date();
-            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date();
-            return dateB.getTime() - dateA.getTime();
+          const unsubscribe = onSnapshot(requestsQuery, (snapshot) => {
+            console.log(`${collectionName} snapshot:`, snapshot.size, "documents");
+            
+            const newRequests = snapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                createdAt: data.createdAt || { toDate: () => new Date() },
+                status: data.status || "pending",
+                serviceType: collectionName === "drillingRequests" ? "drilling" : 
+                            collectionName === "logisticsRequests" ? "logistics" : "consultation",
+                requestDetails: data.requestDetails || {},
+                adminNotes: data.adminNotes,
+                fullName: data.fullName || user.displayName || "Anonymous",
+                email: data.email || user.email || "",
+                phone: data.phone || ""
+              };
+            });
+            
+            // Update combined requests
+            allRequests = allRequests.filter(req => {
+              // Keep requests from other collections
+              return !newRequests.some(newReq => 
+                newReq.id === req.id && 
+                newReq.serviceType === req.serviceType
+              );
+            }).concat(newRequests);
+            
+            // Sort by date
+            allRequests.sort((a, b) => {
+              const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date();
+              const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date();
+              return dateB.getTime() - dateA.getTime();
+            });
+            
+            console.log("All requests after update:", allRequests.length);
+            setRequests(allRequests);
+            
+            completedCollections++;
+            if (completedCollections >= collections.length) {
+              setLoading(prev => ({ ...prev, requests: false }));
+            }
+          }, (error) => {
+            console.error(`Error fetching ${collectionName}:`, error);
+            setRequestError(`Error loading ${collectionName}: ${error.message}`);
+            toast({
+              title: `Error loading ${collectionName}`,
+              description: error.message,
+              variant: "destructive"
+            });
+            completedCollections++;
+            if (completedCollections >= collections.length) {
+              setLoading(prev => ({ ...prev, requests: false }));
+            }
           });
           
-          console.log("All requests after update:", allRequests.length);
-          setRequests(allRequests);
-          setLoading(prev => ({ ...prev, requests: false }));
-        }, (error) => {
-          console.error(`Error fetching ${collectionName}:`, error);
+          // Return unsubscribe function
+          return () => unsubscribe();
+        } catch (error: any) {
+          console.error(`Error setting up ${collectionName} listener:`, error);
+          setRequestError(`Error setting up ${collectionName} listener: ${error.message}`);
           toast({
-            title: `Error loading ${collectionName}`,
+            title: `Error with ${collectionName}`,
             description: error.message,
             variant: "destructive"
           });
-          setLoading(prev => ({ ...prev, requests: false }));
-        });
+          completedCollections++;
+          if (completedCollections >= collections.length) {
+            setLoading(prev => ({ ...prev, requests: false }));
+          }
+        }
       });
       
       // Fetch messages
       setLoading(prev => ({ ...prev, messages: true }));
-      const messagesQuery = query(
-        collection(db, "messages"),
-        where("recipientId", "==", user.uid),
-        orderBy("timestamp", "desc")
-      );
+      setMessageError(null);
       
-      logQuery("messages", { recipientId: user.uid });
-      
-      onSnapshot(messagesQuery, (snapshot) => {
-        console.log("Messages snapshot:", snapshot.size, "documents");
+      try {
+        // Use our safer query for messages
+        const messagesQuery = createMessagesQuery(user.uid);
         
-        const messagesData: Message[] = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            sender: data.sender || "Midas Touch Support",
-            recipientId: data.recipientId,
-            message: data.message || "",
-            subject: data.subject || "Message from Midas Touch",
-            timestamp: data.timestamp,
-            read: data.read || false
-          };
+        logQuery("messages", { recipientId: user.uid });
+        
+        const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+          console.log("Messages snapshot:", snapshot.size, "documents");
+          
+          const messagesData: Message[] = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              sender: data.sender || "Midas Touch Support",
+              recipientId: data.recipientId,
+              message: data.message || "",
+              subject: data.subject || "Message from Midas Touch",
+              timestamp: data.timestamp || { toDate: () => new Date() },
+              read: data.read || false
+            };
+          });
+          
+          setMessages(messagesData);
+          
+          // Count unread messages
+          const unreadCount = messagesData.filter(msg => !msg.read).length;
+          setUnreadMessages(unreadCount);
+          
+          setLoading(prev => ({ ...prev, messages: false }));
+        }, (error) => {
+          console.error("Error fetching messages:", error);
+          setMessageError(`Error loading messages: ${error.message}`);
+          toast({
+            title: "Error loading messages",
+            description: error.message,
+            variant: "destructive"
+          });
+          setLoading(prev => ({ ...prev, messages: false }));
         });
         
-        setMessages(messagesData);
-        
-        // Count unread messages
-        const unreadCount = messagesData.filter(msg => !msg.read).length;
-        setUnreadMessages(unreadCount);
-        
-        setLoading(prev => ({ ...prev, messages: false }));
-      }, (error) => {
-        console.error("Error fetching messages:", error);
+        // Return unsubscribe function
+        return () => unsubscribe();
+      } catch (error: any) {
+        console.error("Error setting up messages listener:", error);
+        setMessageError(`Error setting up messages listener: ${error.message}`);
         toast({
-          title: "Error loading messages",
+          title: "Error with messages",
           description: error.message,
           variant: "destructive"
         });
         setLoading(prev => ({ ...prev, messages: false }));
-      });
+      }
     }
   }, [user, navigate]);
 
@@ -589,6 +642,18 @@ const UserDashboard = () => {
                           </div>
                         ))}
                       </div>
+                    ) : requestError ? (
+                      <div className="p-4 border border-red-300 rounded-md bg-red-50 dark:bg-red-900/20 dark:border-red-800/40">
+                        <h4 className="font-semibold text-red-700 dark:text-red-400">Error Loading Requests</h4>
+                        <p className="text-red-600 dark:text-red-300 text-sm">{requestError}</p>
+                        <Button 
+                          className="mt-2 bg-red-600 hover:bg-red-700 text-white" 
+                          size="sm"
+                          onClick={() => window.location.reload()}
+                        >
+                          Retry
+                        </Button>
+                      </div>
                     ) : requests.length > 0 ? (
                       <div className="space-y-4">
                         {requests.map((request) => (
@@ -767,6 +832,18 @@ const UserDashboard = () => {
                           </div>
                         ))}
                       </div>
+                    ) : messageError ? (
+                      <div className="p-4 border border-red-300 rounded-md bg-red-50 dark:bg-red-900/20 dark:border-red-800/40">
+                        <h4 className="font-semibold text-red-700 dark:text-red-400">Error Loading Messages</h4>
+                        <p className="text-red-600 dark:text-red-300 text-sm">{messageError}</p>
+                        <Button 
+                          className="mt-2 bg-red-600 hover:bg-red-700 text-white" 
+                          size="sm"
+                          onClick={() => window.location.reload()}
+                        >
+                          Retry
+                        </Button>
+                      </div> 
                     ) : messages.length > 0 ? (
                       <div className="space-y-4">
                         {messages.map((message) => (

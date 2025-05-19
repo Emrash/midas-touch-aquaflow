@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator, collection, query, where, orderBy } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 // Firebase configuration
@@ -31,6 +31,49 @@ if (process.env.NODE_ENV === 'development') {
 export const logQuery = (collectionName: string, filters: any) => {
   if (process.env.NODE_ENV === 'development') {
     console.log(`Querying ${collectionName} with filters:`, filters);
+  }
+};
+
+// Helper function to create safe queries with proper error handling
+export const createSafeQuery = (collectionPath: string, userId: string) => {
+  try {
+    const collectionRef = collection(db, collectionPath);
+    return query(
+      collectionRef,
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    );
+  } catch (error) {
+    console.error(`Error creating query for ${collectionPath}:`, error);
+    
+    // Return a fallback query without orderBy to avoid index errors
+    // This will at least get the data even if not sorted properly
+    const collectionRef = collection(db, collectionPath);
+    return query(
+      collectionRef,
+      where("userId", "==", userId)
+    );
+  }
+};
+
+// Helper function for messages queries
+export const createMessagesQuery = (userId: string) => {
+  try {
+    const messagesRef = collection(db, "messages");
+    return query(
+      messagesRef,
+      where("recipientId", "==", userId),
+      orderBy("timestamp", "desc")
+    );
+  } catch (error) {
+    console.error("Error creating messages query:", error);
+    
+    // Return a fallback query without orderBy
+    const messagesRef = collection(db, "messages");
+    return query(
+      messagesRef,
+      where("recipientId", "==", userId)
+    );
   }
 };
 

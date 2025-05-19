@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ import { Clock, Calendar, FileText, User, MessageSquare, Settings, Phone, Mail, 
 import { toast } from "@/hooks/use-toast";
 import { updateProfile } from "firebase/auth";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, onSnapshot, Timestamp, doc, updateDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
@@ -231,8 +230,9 @@ const UserDashboard = () => {
       const q = query(messageRef, where("id", "==", id));
       const querySnapshot = await getDocs(q);
       
-      querySnapshot.forEach(doc => {
-        doc.ref.update({ read: true });
+      querySnapshot.forEach(docRef => {
+        // Use updateDoc instead of directly accessing update method
+        updateDoc(doc(db, "messages", docRef.id), { read: true });
       });
       
       toast({
@@ -676,7 +676,7 @@ const UserDashboard = () => {
                     ) : (
                       <div className="text-center py-12 bg-gray-50/50 dark:bg-mdpc-brown-darkest/30 rounded-lg">
                         <FileText className="h-12 w-12 text-gray-300 dark:text-mdpc-brown-dark/50 mx-auto mb-4" />
-                        <p className="text-muted-foreground dark:text-mdpc-brown-light mb-2">No requests found</p>
+                        <p className="text-muted-foreground dark:text-mdpc-brown-light">No requests found</p>
                         <p className="text-sm text-gray-500 dark:text-mdpc-brown-light/70 mb-4">Submit a consultation request to get started</p>
                         <Button 
                           variant="default" 

@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { Clock, Calendar, FileText, User, MessageSquare, Settings, Phone, Mail, Save, X, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { updateProfile } from "firebase/auth";
-import { db } from "@/lib/firebase";
+import { db, logQuery } from "@/lib/firebase";
 import { collection, getDocs, query, where, orderBy, onSnapshot, Timestamp, doc, updateDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -92,6 +92,9 @@ const UserDashboard = () => {
       let allRequests: BaseRequest[] = [];
       
       collections.forEach(collectionName => {
+        // Log the query to help with debugging
+        logQuery(collectionName, { userId: user.uid });
+        
         const requestsQuery = query(
           collection(db, collectionName),
           where("userId", "==", user.uid),
@@ -99,6 +102,8 @@ const UserDashboard = () => {
         );
         
         onSnapshot(requestsQuery, (snapshot) => {
+          console.log(`${collectionName} snapshot:`, snapshot.size, "documents");
+          
           const newRequests = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -131,10 +136,16 @@ const UserDashboard = () => {
             return dateB.getTime() - dateA.getTime();
           });
           
+          console.log("All requests after update:", allRequests.length);
           setRequests(allRequests);
           setLoading(prev => ({ ...prev, requests: false }));
         }, (error) => {
           console.error(`Error fetching ${collectionName}:`, error);
+          toast({
+            title: `Error loading ${collectionName}`,
+            description: error.message,
+            variant: "destructive"
+          });
           setLoading(prev => ({ ...prev, requests: false }));
         });
       });
@@ -147,7 +158,11 @@ const UserDashboard = () => {
         orderBy("timestamp", "desc")
       );
       
+      logQuery("messages", { recipientId: user.uid });
+      
       onSnapshot(messagesQuery, (snapshot) => {
+        console.log("Messages snapshot:", snapshot.size, "documents");
+        
         const messagesData: Message[] = snapshot.docs.map(doc => {
           const data = doc.data();
           return {
@@ -170,6 +185,11 @@ const UserDashboard = () => {
         setLoading(prev => ({ ...prev, messages: false }));
       }, (error) => {
         console.error("Error fetching messages:", error);
+        toast({
+          title: "Error loading messages",
+          description: error.message,
+          variant: "destructive"
+        });
         setLoading(prev => ({ ...prev, messages: false }));
       });
     }
@@ -232,14 +252,8 @@ const UserDashboard = () => {
     
     try {
       // Update the message in Firebase
-      const messageRef = collection(db, "messages");
-      const q = query(messageRef, where("id", "==", id));
-      const querySnapshot = await getDocs(q);
-      
-      querySnapshot.forEach(docRef => {
-        // Use updateDoc instead of directly accessing update method
-        updateDoc(doc(db, "messages", docRef.id), { read: true });
-      });
+      const messageRef = doc(db, "messages", id);
+      await updateDoc(messageRef, { read: true });
       
       toast({
         title: "Message Marked as Read",

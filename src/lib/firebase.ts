@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 // Firebase configuration
@@ -20,6 +20,19 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
 const storage = getStorage(app);
+
+// Enable better error messages during development
+if (process.env.NODE_ENV === 'development') {
+  // Uncomment for local emulator if needed
+  // connectFirestoreEmulator(db, '127.0.0.1', 8080);
+}
+
+// Helper function to log Firestore queries during development
+export const logQuery = (collectionName: string, filters: any) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Querying ${collectionName} with filters:`, filters);
+  }
+};
 
 export { auth, googleProvider, db, storage };
 export default app;

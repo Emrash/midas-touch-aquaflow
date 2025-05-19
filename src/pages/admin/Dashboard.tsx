@@ -82,6 +82,7 @@ const AdminDashboard = () => {
     // Fetch drilling requests
     const drillingQuery = query(collection(db, "drillingRequests"), orderBy("createdAt", "desc"));
     const unsubscribeDrilling = onSnapshot(drillingQuery, (snapshot) => {
+      console.log("Drilling requests snapshot:", snapshot.size, "documents");
       const requests: BaseRequest[] = [];
       snapshot.forEach((doc) => {
         const data = doc.data() as FirestoreRequestData;
@@ -103,6 +104,7 @@ const AdminDashboard = () => {
       console.error("Error fetching drilling requests: ", error);
       toast({
         title: "Error fetching drilling requests",
+        description: error.message,
         variant: "destructive"
       });
     });
@@ -227,6 +229,7 @@ const AdminDashboard = () => {
   };
 
   const openMessageDialog = (userId: string, fullName: string, email: string) => {
+    console.log("Opening message dialog for user:", userId, fullName, email);
     setMessageRecipient({
       id: userId,
       name: fullName || "Client",
@@ -240,17 +243,21 @@ const AdminDashboard = () => {
   const sendMessage = async () => {
     if (!messageRecipient || !messageText.trim()) return;
     
+    console.log("Sending message to:", messageRecipient);
     setSendingMessage(true);
     try {
       // Create a new message document
-      await addDoc(collection(db, "messages"), {
+      const messageData = {
         sender: user?.email || "Midas Touch Admin",
         recipientId: messageRecipient.id,
         subject: messageSubject || "Update from Midas Touch",
         message: messageText,
         timestamp: Timestamp.now(),
         read: false
-      });
+      };
+      
+      await addDoc(collection(db, "messages"), messageData);
+      console.log("Message sent successfully:", messageData);
       
       toast({
         title: "Message Sent",
@@ -261,11 +268,11 @@ const AdminDashboard = () => {
       setMessageText("");
       setMessageSubject("");
       setMessageRecipient(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending message:", error);
       toast({
         title: "Error Sending Message",
-        description: "There was a problem sending your message. Please try again.",
+        description: error.message || "There was a problem sending your message. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -520,7 +527,18 @@ const AdminDashboard = () => {
                                         variant="default" 
                                         size="sm"
                                         className="bg-mdpc-blue text-white hover:bg-mdpc-blue-dark"
-                                        onClick={() => openMessageDialog(request.userId, request.fullName, request.email)}
+                                        onClick={() => {
+                                          console.log("Message button clicked for user:", request.userId);
+                                          if (request.userId) {
+                                            openMessageDialog(request.userId, request.fullName || "", request.email || "");
+                                          } else {
+                                            toast({
+                                              title: "Error",
+                                              description: "Cannot message user: User ID not found",
+                                              variant: "destructive"
+                                            });
+                                          }
+                                        }}
                                         title="Send message to client"
                                       >
                                         <MessageSquare className="h-4 w-4 mr-1" />
@@ -787,7 +805,7 @@ const AdminDashboard = () => {
       
       {/* Message Dialog */}
       <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Send Message to Client</DialogTitle>
             <DialogDescription>

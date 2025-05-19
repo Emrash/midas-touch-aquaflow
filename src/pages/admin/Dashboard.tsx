@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,22 @@ interface BaseRequest {
   adminNotes?: string;
 }
 
+// Define the shape of data coming from Firestore before we add the id
+interface FirestoreRequestData {
+  fullName?: string; // Make fullName optional since we might fallback to another property
+  email?: string;
+  phone?: string;
+  status: RequestStatus;
+  createdAt: Timestamp;
+  userId: string;
+  serviceType?: string;
+  requestDetails?: {
+    message?: string;
+    [key: string]: any;
+  };
+  adminNotes?: string;
+}
+
 const AdminDashboard = () => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -60,10 +75,10 @@ const AdminDashboard = () => {
     const unsubscribeDrilling = onSnapshot(drillingQuery, (snapshot) => {
       const requests: BaseRequest[] = [];
       snapshot.forEach((doc) => {
-        const data = doc.data() as Omit<BaseRequest, 'id'>;
+        const data = doc.data() as FirestoreRequestData;
         requests.push({
           id: doc.id,
-          fullName: data.fullName || data.name || "Unknown",
+          fullName: data.fullName || "Unknown",
           email: data.email || "",
           phone: data.phone || "",
           serviceType: data.serviceType || "drilling",
@@ -88,10 +103,10 @@ const AdminDashboard = () => {
     const unsubscribeLogistics = onSnapshot(logisticsQuery, (snapshot) => {
       const requests: BaseRequest[] = [];
       snapshot.forEach((doc) => {
-        const data = doc.data() as Omit<BaseRequest, 'id'>;
+        const data = doc.data() as FirestoreRequestData;
         requests.push({
           id: doc.id,
-          fullName: data.fullName || data.name || "Unknown",
+          fullName: data.fullName || "Unknown",
           email: data.email || "",
           phone: data.phone || "",
           serviceType: data.serviceType || "logistics",
@@ -116,10 +131,10 @@ const AdminDashboard = () => {
     const unsubscribeConsultation = onSnapshot(consultationQuery, (snapshot) => {
       const requests: BaseRequest[] = [];
       snapshot.forEach((doc) => {
-        const data = doc.data() as Omit<BaseRequest, 'id'>;
+        const data = doc.data() as FirestoreRequestData;
         requests.push({
           id: doc.id,
-          fullName: data.fullName || data.name || "Unknown",
+          fullName: data.fullName || "Unknown",
           email: data.email || "",
           phone: data.phone || "",
           serviceType: data.serviceType || "consultation",

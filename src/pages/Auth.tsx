@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, Google } from "lucide-react";
+import { Mail, Lock, Globe } from "lucide-react";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -127,7 +128,7 @@ const Auth = () => {
               className="w-full flex items-center justify-center gap-2 border-mdpc-brown/30 dark:border-mdpc-gold/20"
               onClick={handleGoogleSignIn}
             >
-              <Google className="h-5 w-5" />
+              <Globe className="h-5 w-5" />
               Sign In with Google
             </Button>
           </div>

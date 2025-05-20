@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ const LogisticsRequestForm = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    name: user?.displayName || "",
     email: user?.email || "",
     phone: "",
     pickupLocation: "",
@@ -56,38 +57,53 @@ const LogisticsRequestForm = () => {
     try {
       // Save to Firestore
       const docRef = await addDoc(collection(db, "logisticsRequests"), {
-        ...formData,
+        fullName: formData.name,
+        email: formData.email,
+        phone: formData.phone,
         userId: user?.uid || "guest",
+        serviceType: "logistics",
+        requestDetails: {
+          serviceSubType: formData.serviceType,
+          pickupLocation: formData.pickupLocation,
+          deliveryLocation: formData.deliveryLocation,
+          cargoDescription: formData.cargoDescription,
+          deliveryDate: formData.deliveryDate,
+          message: formData.message
+        },
         status: "pending",
         createdAt: serverTimestamp(),
       });
       
       // Send email notification
-      await sendServiceRequestNotification(
-        "logistics",
-        formData.name,
-        formData.email,
-        {
-          phone: formData.phone,
-          pickupLocation: formData.pickupLocation,
-          deliveryLocation: formData.deliveryLocation,
-          serviceType: formData.serviceType,
-          cargoDescription: formData.cargoDescription,
-          deliveryDate: formData.deliveryDate,
-          message: formData.message,
-          requestId: docRef.id
-        }
-      );
+      try {
+        await sendServiceRequestNotification(
+          "logistics",
+          formData.name,
+          formData.email,
+          {
+            phone: formData.phone,
+            pickupLocation: formData.pickupLocation,
+            deliveryLocation: formData.deliveryLocation,
+            serviceType: formData.serviceType,
+            cargoDescription: formData.cargoDescription,
+            deliveryDate: formData.deliveryDate,
+            message: formData.message,
+            requestId: docRef.id
+          }
+        );
+      } catch (emailError) {
+        console.error("Failed to send email notification:", emailError);
+      }
       
       // Show success message
       toast({
         title: "Request submitted successfully!",
-        description: "We will contact you shortly regarding your logistics service request.",
+        description: "Your request has been submitted. We'll be in touch soon.",
       });
       
       // Reset form
       setFormData({
-        name: "",
+        name: user?.displayName || "",
         email: user?.email || "",
         phone: "",
         pickupLocation: "",

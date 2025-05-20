@@ -11,11 +11,14 @@ import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { motion } from "framer-motion";
-import { User, Mail, Lock } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { updateProfile } from "firebase/auth";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, signIn, signUp, signInWithGoogle, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -43,13 +46,28 @@ const Auth = () => {
         description: "Welcome back to Midas Touch!",
       });
       // Navigation will happen via useEffect
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast({
-        title: "Error signing in",
-        description: "Please check your email and password",
-        variant: "destructive",
-      });
+      // More descriptive error messages
+      if (error.code === "auth/user-not-found") {
+        toast({
+          title: "No account found",
+          description: "Please sign up first or check your email address",
+          variant: "destructive",
+        });
+      } else if (error.code === "auth/wrong-password") {
+        toast({
+          title: "Incorrect password",
+          description: "Please check your password and try again",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error signing in",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -57,21 +75,48 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      await signUp(email, password);
+    
+    if (!fullName.trim()) {
       toast({
-        title: "Account created!",
-        description: "You have been successfully signed up and logged in.",
-      });
-      // Navigation will happen via useEffect
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error signing up",
-        description: "Please check your information and try again",
+        title: "Full name required",
+        description: "Please enter your full name to continue",
         variant: "destructive",
       });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      const result = await signUp(email, password);
+      
+      // Update profile with the full name
+      if (result && result.user) {
+        await updateProfile(result.user, {
+          displayName: fullName
+        });
+      }
+      
+      toast({
+        title: "Account created!",
+        description: `Welcome to Midas Touch, ${fullName}!`,
+      });
+      // Navigation will happen via useEffect
+    } catch (error: any) {
+      console.error(error);
+      
+      if (error.code === "auth/email-already-in-use") {
+        toast({
+          title: "Email already in use",
+          description: "This email already has an account. Please sign in instead.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error signing up",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -82,7 +127,7 @@ const Auth = () => {
     try {
       await signInWithGoogle();
       // Navigation will happen via useEffect
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         title: "Error signing in with Google",
@@ -92,6 +137,10 @@ const Auth = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -140,15 +189,28 @@ const Auth = () => {
                         <Lock className="h-4 w-4 text-mdpc-gold" />
                         Password
                       </label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        className="dark:bg-mdpc-brown-darkest/30 dark:border-mdpc-brown-dark/30 dark:text-white"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          className="pr-10 dark:bg-mdpc-brown-darkest/30 dark:border-mdpc-brown-dark/30 dark:text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={togglePasswordVisibility}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-mdpc-brown-light dark:hover:text-white"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </CardContent>
                   <CardFooter className="flex flex-col">
@@ -200,6 +262,21 @@ const Auth = () => {
                 <form onSubmit={handleSignUp}>
                   <CardContent className="space-y-4 pt-6">
                     <div className="space-y-2">
+                      <label htmlFor="fullName" className="flex items-center gap-2 text-sm font-medium dark:text-mdpc-brown-light">
+                        <User className="h-4 w-4 text-mdpc-gold" />
+                        Full Name
+                      </label>
+                      <Input
+                        id="fullName"
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="John Doe"
+                        required
+                        className="dark:bg-mdpc-brown-darkest/30 dark:border-mdpc-brown-dark/30 dark:text-white"
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <label htmlFor="signup-email" className="flex items-center gap-2 text-sm font-medium dark:text-mdpc-brown-light">
                         <Mail className="h-4 w-4 text-mdpc-gold" />
                         Email
@@ -219,15 +296,28 @@ const Auth = () => {
                         <Lock className="h-4 w-4 text-mdpc-gold" />
                         Password
                       </label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        className="dark:bg-mdpc-brown-darkest/30 dark:border-mdpc-brown-dark/30 dark:text-white"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="signup-password"
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          className="pr-10 dark:bg-mdpc-brown-darkest/30 dark:border-mdpc-brown-dark/30 dark:text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={togglePasswordVisibility}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-mdpc-brown-light dark:hover:text-white"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </CardContent>
                   <CardFooter className="flex flex-col">

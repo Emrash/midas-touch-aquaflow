@@ -8,7 +8,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { toast } from "@/hooks/use-toast";
 
 // Fix marker icon issue - TypeScript safe approach
-const defaultIcon = new L.Icon({
+const defaultIcon = L.icon({
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
   iconSize: [25, 41],
@@ -17,11 +17,8 @@ const defaultIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Set the default icon for all markers
-L.Marker.prototype.options.icon = defaultIcon;
-
 // Custom gold icon for main locations
-const goldIcon = new L.Icon({
+const goldIcon = L.icon({
   iconUrl: markerIconGold,
   shadowUrl: markerShadow,
   iconSize: [25, 41],
@@ -80,7 +77,7 @@ const Map = ({ center, zoom, markers, height = '400px' }: MapProps) => {
           
           // Apply CSS class for main markers for additional styling
           if (isMain && marker.getElement()) {
-            marker.getElement().classList.add('main-marker-element');
+            marker.getElement()?.classList.add('main-marker-element');
           }
         });
       }

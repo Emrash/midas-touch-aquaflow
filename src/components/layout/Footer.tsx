@@ -1,6 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import logoImage from "@/assets/logo.jpg";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -46,9 +47,11 @@ const Footer = () => {
           {/* Logo and company info */}
           <motion.div variants={fadeInUpVariants}>
             <div className="flex items-center mb-4">
-              <div className="h-12 w-12 rounded-full bg-mdpc-gold flex items-center justify-center mr-3">
-                <span className="text-white font-heading font-bold text-xl">MD</span>
-              </div>
+              <img 
+                src={logoImage} 
+                alt="Midas Touch Drills" 
+                className="h-12 w-12 rounded-full object-cover mr-3"
+              />
               <div className="flex flex-col">
                 <span className="font-heading font-bold text-xl leading-tight">Midas Touch</span>
                 <span className="text-xs text-blue-100">Drills & Projects Consult</span>

@@ -9,6 +9,7 @@ import {
   Menu,
   X
 } from "lucide-react";
+import logoImage from "@/assets/logo.jpg";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -63,9 +64,11 @@ const Navbar = () => {
       <div className="container mx-auto px-4 flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-mdpc-gold to-mdpc-gold-dark flex items-center justify-center shadow-gold-glow">
-            <span className="text-white font-heading font-bold text-lg">MD</span>
-          </div>
+          <img 
+            src={logoImage} 
+            alt="Midas Touch Drills"
+            className="h-10 w-auto rounded-full"
+          />
           <div className="ml-2">
             <h1 className="text-mdpc-brown-dark dark:text-mdpc-gold text-lg font-heading font-bold leading-tight">
               Midas Touch

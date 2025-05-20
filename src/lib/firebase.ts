@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator, collection, query, where, orderBy } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator, collection, query, where, orderBy, onSnapshot, Query, QuerySnapshot } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 // Firebase configuration
@@ -34,21 +34,23 @@ export const logQuery = (collectionName: string, filters: any) => {
   }
 };
 
-// Helper function to create safe queries with proper error handling
+// Improved helper function to create safe queries with progressive fallbacks
 export const createSafeQuery = (collectionPath: string, userId: string) => {
+  const collectionRef = collection(db, collectionPath);
+  
   try {
-    const collectionRef = collection(db, collectionPath);
+    // Try full query with ordering first
+    console.log(`Creating ordered query for ${collectionPath}`);
     return query(
       collectionRef,
       where("userId", "==", userId),
       orderBy("createdAt", "desc")
     );
   } catch (error) {
-    console.error(`Error creating query for ${collectionPath}:`, error);
+    console.warn(`Error creating ordered query for ${collectionPath}:`, error);
+    console.log(`Falling back to unordered query for ${collectionPath}`);
     
-    // Return a fallback query without orderBy to avoid index errors
-    // This will at least get the data even if not sorted properly
-    const collectionRef = collection(db, collectionPath);
+    // Fall back to query without ordering
     return query(
       collectionRef,
       where("userId", "==", userId)
@@ -56,24 +58,83 @@ export const createSafeQuery = (collectionPath: string, userId: string) => {
   }
 };
 
-// Helper function for messages queries
+// Helper function for messages queries with progressive fallbacks
 export const createMessagesQuery = (userId: string) => {
+  const messagesRef = collection(db, "messages");
+  
   try {
-    const messagesRef = collection(db, "messages");
+    // Try full query with ordering first
+    console.log("Creating ordered messages query");
     return query(
       messagesRef,
       where("recipientId", "==", userId),
       orderBy("timestamp", "desc")
     );
   } catch (error) {
-    console.error("Error creating messages query:", error);
+    console.warn("Error creating ordered messages query:", error);
+    console.log("Falling back to unordered messages query");
     
-    // Return a fallback query without orderBy
-    const messagesRef = collection(db, "messages");
+    // Fall back to query without ordering
     return query(
       messagesRef,
       where("recipientId", "==", userId)
     );
+  }
+};
+
+// Safer function to execute a query with fallbacks
+export const executeSafeQuery = (
+  queryFn: () => Query, 
+  onSuccess: (snapshot: QuerySnapshot) => void,
+  onError: (error: any) => void
+) => {
+  // Try the main query first
+  try {
+    const mainQuery = queryFn();
+    return onSnapshot(mainQuery, onSuccess, (error) => {
+      console.error("Error with main query:", error);
+      
+      // If the main query fails, try a simpler fallback
+      try {
+        // This is a simplified version that we might implement later if needed
+        onError(error);
+      } catch (fallbackError) {
+        onError(fallbackError);
+      }
+    });
+  } catch (setupError) {
+    console.error("Error setting up query:", setupError);
+    onError(setupError);
+    // Return a no-op unsubscribe function
+    return () => {};
+  }
+};
+
+// Helper function to create individual collection queries
+export const createCollectionQuery = (collectionName: string, userId: string) => {
+  const collectionRef = collection(db, collectionName);
+  
+  // First try with ordering
+  try {
+    return {
+      query: query(
+        collectionRef,
+        where("userId", "==", userId),
+        orderBy("createdAt", "desc")
+      ),
+      ordered: true
+    };
+  } catch (error) {
+    console.warn(`Could not create ordered query for ${collectionName}:`, error);
+    
+    // Fall back to unordered
+    return {
+      query: query(
+        collectionRef,
+        where("userId", "==", userId)
+      ),
+      ordered: false
+    };
   }
 };
 

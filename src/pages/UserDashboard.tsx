@@ -11,8 +11,8 @@ import { useNavigate } from "react-router-dom";
 import { Clock, Calendar, FileText, User, MessageSquare, Settings, Phone, Mail, Save, X, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { updateProfile } from "firebase/auth";
-import { db, logQuery, createSafeQuery, createMessagesQuery } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy, onSnapshot, Timestamp, doc, updateDoc } from "firebase/firestore";
+import { db, logQuery, createMessagesQuery, createSafeQuery, executeSafeQuery } from "@/lib/firebase";
+import { collection, getDocs, query, where, orderBy, onSnapshot, Timestamp, doc, updateDoc, getDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
@@ -94,30 +94,25 @@ const UserDashboard = () => {
       const collections = ["drillingRequests", "logisticsRequests", "consultationRequests"];
       let allRequests: BaseRequest[] = [];
       let completedCollections = 0;
+      let unsubscribeFunctions: Array<() => void> = [];
       
       collections.forEach(collectionName => {
+        console.log(`Setting up listener for ${collectionName}`);
         // Log the query to help with debugging
         logQuery(collectionName, { userId: user.uid });
         
         try {
-          // Use our safer query creation method
-          let requestsQuery;
+          // Create a reference to the collection
+          const collectionRef = collection(db, collectionName);
           
-          // For testing purposes, we'll try different approaches for different collections
-          if (collectionName === "consultationRequests") {
-            // For consultation requests, use the simpler query without ordering first
-            const collectionRef = collection(db, collectionName);
-            requestsQuery = query(
-              collectionRef,
-              where("userId", "==", user.uid)
-            );
-          } else {
-            // For other collections, use our helper
-            requestsQuery = createSafeQuery(collectionName, user.uid);
-          }
+          // Try first with a simpler query without orderBy to avoid missing index errors
+          const simpleQuery = query(
+            collectionRef,
+            where("userId", "==", user.uid)
+          );
           
-          const unsubscribe = onSnapshot(requestsQuery, (snapshot) => {
-            console.log(`${collectionName} snapshot:`, snapshot.size, "documents");
+          const unsubscribe = onSnapshot(simpleQuery, (snapshot) => {
+            console.log(`${collectionName} snapshot received:`, snapshot.size, "documents");
             
             const newRequests = snapshot.docs.map(doc => {
               const data = doc.data();
@@ -135,6 +130,8 @@ const UserDashboard = () => {
               };
             });
             
+            console.log(`${collectionName} processed data:`, newRequests);
+            
             // Update combined requests
             allRequests = allRequests.filter(req => {
               // Keep requests from other collections
@@ -144,7 +141,7 @@ const UserDashboard = () => {
               );
             }).concat(newRequests);
             
-            // Sort by date
+            // Sort by date manually since we might not use orderBy in the query
             allRequests.sort((a, b) => {
               const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date();
               const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date();
@@ -172,8 +169,8 @@ const UserDashboard = () => {
             }
           });
           
-          // Return unsubscribe function
-          return () => unsubscribe();
+          unsubscribeFunctions.push(unsubscribe);
+          
         } catch (error: any) {
           console.error(`Error setting up ${collectionName} listener:`, error);
           setRequestError(`Error setting up ${collectionName} listener: ${error.message}`);
@@ -194,12 +191,16 @@ const UserDashboard = () => {
       setMessageError(null);
       
       try {
-        // Use our safer query for messages
-        const messagesQuery = createMessagesQuery(user.uid);
+        // Simple query for messages without orderBy to avoid missing index errors
+        const messagesRef = collection(db, "messages");
+        const messagesQuery = query(
+          messagesRef,
+          where("recipientId", "==", user.uid)
+        );
         
         logQuery("messages", { recipientId: user.uid });
         
-        const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+        const unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
           console.log("Messages snapshot:", snapshot.size, "documents");
           
           const messagesData: Message[] = snapshot.docs.map(doc => {
@@ -213,6 +214,13 @@ const UserDashboard = () => {
               timestamp: data.timestamp || { toDate: () => new Date() },
               read: data.read || false
             };
+          });
+          
+          // Sort messages manually by timestamp since we're not using orderBy
+          messagesData.sort((a, b) => {
+            const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date();
+            const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date();
+            return dateB.getTime() - dateA.getTime();
           });
           
           setMessages(messagesData);
@@ -233,8 +241,7 @@ const UserDashboard = () => {
           setLoading(prev => ({ ...prev, messages: false }));
         });
         
-        // Return unsubscribe function
-        return () => unsubscribe();
+        unsubscribeFunctions.push(unsubscribeMessages);
       } catch (error: any) {
         console.error("Error setting up messages listener:", error);
         setMessageError(`Error setting up messages listener: ${error.message}`);
@@ -245,6 +252,11 @@ const UserDashboard = () => {
         });
         setLoading(prev => ({ ...prev, messages: false }));
       }
+      
+      // Return cleanup function
+      return () => {
+        unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+      };
     }
   }, [user, navigate]);
 

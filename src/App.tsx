@@ -3,12 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ConsultationProvider } from "./contexts/ConsultationContext";
 import ConsultationModal from "./components/ui/ConsultationModal";
 import { useConsultation } from "./contexts/ConsultationContext";
 import ProtectedRoute from "./components/ui/ProtectedRoute";
+import { useEffect } from "react";
 
 // Pages
 import Index from "./pages/Index";
@@ -28,6 +29,22 @@ import LogisticsHome from "./pages/logistics/LogisticsHome";
 import WhatsAppButton from "./components/ui/WhatsAppButton";
 
 const queryClient = new QueryClient();
+
+// Admin auto-redirect component
+const AdminRedirect = () => {
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Only redirect if at root or auth pages and user is admin
+    if (isAdmin && (location.pathname === "/" || location.pathname === "/auth")) {
+      navigate("/admin");
+    }
+  }, [isAdmin, navigate, location.pathname]);
+
+  return null;
+};
 
 // Modal container component
 const ModalContainer = () => {
@@ -52,6 +69,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <AdminRedirect />
             <WhatsAppButton phoneNumber="2348001234567" />
             <ModalContainer />
             <Routes>

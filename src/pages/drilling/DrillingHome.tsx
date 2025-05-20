@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
@@ -9,6 +8,10 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Droplet, Filter, Gauge, Activity, Wrench, FileText } from "lucide-react";
 import { useConsultation } from "@/contexts/ConsultationContext";
 import { motion } from "framer-motion";
+import drillingImage1 from "../../assets/driiling1.jpg";
+import drillingImage2 from "../../assets/drilling2.jpg";
+import drillingImage3 from "../../assets/drilling3.jpg";
+import drillingRig from "../../assets/drilling_rig.jpg";
 
 const serviceItems = [
   {
@@ -84,8 +87,11 @@ const DrillingHome = () => {
     <div className="min-h-screen">
       <Navbar />
       <main>
-        <section className="bg-gradient-to-b from-mdpc-blue to-blue-900 text-white py-20 md:py-32">
-          <div className="container mx-auto px-4">
+        <section className="bg-gradient-to-b from-mdpc-blue to-blue-900 text-white py-20 md:py-32 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20">
+            <img src={drillingRig} alt="Drilling Equipment" className="w-full h-full object-cover" />
+          </div>
+          <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
               <motion.h1 
                 initial={{ opacity: 0, y: 20 }}
@@ -139,22 +145,35 @@ const DrillingHome = () => {
               whileInView="visible"
               viewport={{ once: true, amount: 0.1 }}
             >
-              {serviceItems.map((service, index) => (
-                <motion.div 
-                  key={service.title}
-                  variants={itemVariants}
-                  className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                >
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    {service.icon}
-                  </div>
-                  <h3 className="text-xl font-bold mb-3">{service.title}</h3>
-                  <p className="text-gray-600 mb-4">{service.description}</p>
-                  <Button variant="link" className="text-mdpc-blue p-0 flex items-center gap-1" onClick={() => openModal('drilling', `Learn More: ${service.title}`, `Get detailed information about our ${service.title.toLowerCase()} services.`)}>
-                    Learn More <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </motion.div>
-              ))}
+              {serviceItems.map((service, index) => {
+                // Selecting images dynamically based on index
+                const images = [drillingImage1, drillingImage2, drillingImage3];
+                const imageIndex = index % images.length;
+                
+                return (
+                  <motion.div 
+                    key={service.title}
+                    variants={itemVariants}
+                    className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                  >
+                    <div className="w-full h-32 mb-4 overflow-hidden rounded-lg">
+                      <img 
+                        src={images[imageIndex]} 
+                        alt={service.title} 
+                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      />
+                    </div>
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                      {service.icon}
+                    </div>
+                    <h3 className="text-xl font-bold mb-3">{service.title}</h3>
+                    <p className="text-gray-600 mb-4">{service.description}</p>
+                    <Button variant="link" className="text-mdpc-blue p-0 flex items-center gap-1" onClick={() => openModal('drilling', `Learn More: ${service.title}`, `Get detailed information about our ${service.title.toLowerCase()} services.`)}>
+                      Learn More <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
         </section>

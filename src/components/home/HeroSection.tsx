@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useConsultation } from "@/contexts/ConsultationContext";
+import backgroundCover from "../../assets/background_cover.jpg";
 
 const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -125,7 +126,7 @@ const HeroSection = () => {
       ref={heroRef}
       className="relative h-screen flex items-center justify-center overflow-hidden"
       style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1504893524553-b855bce32c67?auto=format&fit=crop&q=80&w=2500')",
+        backgroundImage: `url(${backgroundCover})`,
         backgroundSize: "cover",
         backgroundPosition: "center"
       }}

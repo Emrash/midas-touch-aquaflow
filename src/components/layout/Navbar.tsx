@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path || location.hash === path;
@@ -106,10 +105,10 @@ const Navbar = () => {
                 variant="ghost"
                 className="flex items-center gap-2 text-mdpc-brown-dark dark:text-mdpc-brown-light"
               >
-                <Link to={user.email === "yekinirasheed2002@gmail.com" ? "/admin" : "/profile"}>
+                <Link to={isAdmin ? "/admin" : "/profile"}>
                   <User size={18} />
                   <span className="hidden lg:inline">
-                    {user.email === "yekinirasheed2002@gmail.com" ? "Admin" : "Profile"}
+                    {isAdmin ? "Admin" : "Profile"}
                   </span>
                 </Link>
               </Button>
@@ -196,10 +195,10 @@ const Navbar = () => {
             {user ? (
               <>
                 <MobileNavLink 
-                  to={user.email === "yekinirasheed2002@gmail.com" ? "/admin" : "/profile"} 
-                  active={isActive(user.email === "yekinirasheed2002@gmail.com" ? "/admin" : "/profile")}
+                  to={isAdmin ? "/admin" : "/profile"} 
+                  active={isActive(isAdmin ? "/admin" : "/profile")}
                 >
-                  {user.email === "yekinirasheed2002@gmail.com" ? "Admin Dashboard" : "My Profile"}
+                  {isAdmin ? "Admin Dashboard" : "My Profile"}
                 </MobileNavLink>
                 <Button 
                   variant="outline" 

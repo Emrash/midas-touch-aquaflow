@@ -33,6 +33,9 @@ export const useAuth = () => {
   return context;
 };
 
+// Admin email constant for better maintainability
+const ADMIN_EMAIL = "yekinirasheed2002@gmail.com";
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,8 +44,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      // Check if user is admin (email is yekinirasheed2002@gmail.com)
-      setIsAdmin(currentUser?.email === 'yekinirasheed2002@gmail.com');
+      // Check if user is admin using case-insensitive comparison
+      setIsAdmin(
+        !!currentUser?.email && 
+        currentUser.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()
+      );
       setLoading(false);
     });
 

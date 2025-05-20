@@ -1,9 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import drillingImg from '../../assets/driiling1.jpg';
+import projectGalleryImg from '../../assets/project_gallery.jpg';
 
 // Custom hooks and components
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +15,7 @@ import MessageModal from '@/components/admin/MessageModal';
 
 // UI Components
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -30,18 +33,6 @@ const AdminDashboard = () => {
   const consultationRequests = useRequestsData(admin, "consultationRequests");
   const drillingRequests = useRequestsData(admin, "drillingRequests");
   const logisticsRequests = useRequestsData(admin, "logisticsRequests");
-
-  // Check if user is admin
-  useEffect(() => {
-    if (!loading && (!admin || !admin.email?.endsWith('@midastouch.com'))) {
-      toast({
-        title: "Access Denied",
-        description: "You need admin privileges to access this page",
-        variant: "destructive",
-      });
-      navigate('/');
-    }
-  }, [admin, loading, navigate, toast]);
 
   // Open message modal
   const handleMessageClick = (userId: string, userName: string) => {
@@ -101,16 +92,29 @@ const AdminDashboard = () => {
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Loading admin dashboard...</div>;
-  }
-
-  if (!admin) {
-    return null; // Redirect will happen via the useEffect
+    return (
+      <div className="p-8 text-center flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-mdpc-gold border-t-transparent mb-4"></div>
+        <p className="text-mdpc-brown-dark dark:text-mdpc-brown-light">Loading admin dashboard...</p>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="relative mb-8 overflow-hidden rounded-xl">
+        <img 
+          src={projectGalleryImg} 
+          alt="Midas Touch Admin Dashboard" 
+          className="w-full h-48 object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-mdpc-blue/80 to-mdpc-blue-dark/40 flex items-center">
+          <div className="ml-8">
+            <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
+            <p className="text-white/90">Manage requests and communicate with clients</p>
+          </div>
+        </div>
+      </div>
       
       <Tabs defaultValue="consultation" onValueChange={setActiveTab} value={activeTab}>
         <TabsList className="grid w-full grid-cols-3">
@@ -125,6 +129,18 @@ const AdminDashboard = () => {
             type="consultation" 
             onMessageClick={handleMessageClick} 
           />
+          {consultationRequests.length === 0 && (
+            <Card className="my-8">
+              <CardContent className="p-6 text-center">
+                <img 
+                  src="/placeholder.svg" 
+                  alt="No requests" 
+                  className="w-32 h-32 mx-auto opacity-30 mb-4"
+                />
+                <p className="text-gray-500">No consultation requests yet</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
         
         <TabsContent value="drilling" className="mt-6">
@@ -133,6 +149,18 @@ const AdminDashboard = () => {
             type="drilling" 
             onMessageClick={handleMessageClick} 
           />
+          {drillingRequests.length === 0 && (
+            <Card className="my-8">
+              <CardContent className="p-6 text-center">
+                <img 
+                  src={drillingImg} 
+                  alt="No drilling requests" 
+                  className="w-32 h-32 mx-auto opacity-50 mb-4 rounded-lg object-cover"
+                />
+                <p className="text-gray-500">No drilling requests yet</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
         
         <TabsContent value="logistics" className="mt-6">
@@ -141,6 +169,18 @@ const AdminDashboard = () => {
             type="logistics" 
             onMessageClick={handleMessageClick} 
           />
+          {logisticsRequests.length === 0 && (
+            <Card className="my-8">
+              <CardContent className="p-6 text-center">
+                <img 
+                  src="/placeholder.svg" 
+                  alt="No logistics requests" 
+                  className="w-32 h-32 mx-auto opacity-30 mb-4"
+                />
+                <p className="text-gray-500">No logistics requests yet</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 

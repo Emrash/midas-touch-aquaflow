@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PhoneIcon, MailIcon, MapPinIcon, ArrowRightIcon } from "lucide-react";
 import Map from "../ui/Map";
+import drillingImage1 from "../../assets/driiling1.jpg";
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -60,8 +61,15 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contact" className="py-20 bg-gray-50 dark:bg-mdpc-brown-darkest/30">
-      <div className="container mx-auto px-4">
+    <section id="contact" className="py-20 bg-gray-50 dark:bg-mdpc-brown-darkest/30 relative">
+      <div className="absolute inset-0 opacity-5 dark:opacity-10">
+        <img 
+          src={drillingImage1} 
+          alt="Background Pattern" 
+          className="w-full h-full object-cover" 
+        />
+      </div>
+      <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-12">
           <h2 className="section-title dark:text-white">Contact Us</h2>
           <p className="text-mdpc-brown-dark dark:text-mdpc-brown-light max-w-2xl mx-auto mt-4">

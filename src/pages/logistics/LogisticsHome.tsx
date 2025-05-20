@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
@@ -9,6 +8,8 @@ import { Link } from "react-router-dom";
 import { Truck, Package, Clock, MapPin, TruckIcon, CheckCircle } from "lucide-react";
 import { useConsultation } from "@/contexts/ConsultationContext";
 import { motion } from "framer-motion";
+import drillingImage1 from "../../assets/driiling1.jpg";
+import img2 from "../../assets/img2.png";
 
 const LogisticsHome = () => {
   const { openModal } = useConsultation();
@@ -69,8 +70,11 @@ const LogisticsHome = () => {
     <div className="min-h-screen">
       <Navbar />
       <main>
-        <section className="bg-gradient-to-b from-mdpc-brown-dark to-mdpc-brown-darkest text-white py-20 md:py-32">
-          <div className="container mx-auto px-4">
+        <section className="bg-gradient-to-b from-mdpc-brown-dark to-mdpc-brown-darkest text-white py-20 md:py-32 relative">
+          <div className="absolute inset-0 opacity-20">
+            <img src={img2} alt="Logistics Background" className="w-full h-full object-cover" />
+          </div>
+          <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
               <motion.h1 
                 initial={{ opacity: 0, y: 20 }}
@@ -215,20 +219,9 @@ const LogisticsHome = () => {
                 <div className="rounded-lg overflow-hidden shadow-lg relative h-80">
                   <div className="absolute inset-0 bg-gradient-to-br from-mdpc-gold/20 to-mdpc-brown-light/20"></div>
                   <img 
-                    src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGxvZ2lzdGljc3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60" 
+                    src={drillingImage1} 
                     alt="Logistics Fleet" 
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = "/placeholder.svg";
-                      e.currentTarget.style.background = 'linear-gradient(45deg, #e6b980 0%, #eacda3 100%)';
-                      const parent = e.currentTarget.parentElement;
-                      if (parent) {
-                        const icon = document.createElement('div');
-                        icon.className = "absolute inset-0 flex items-center justify-center";
-                        icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="opacity-30"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>';
-                        parent.appendChild(icon);
-                      }
-                    }}
                   />
                 </div>
               </div>

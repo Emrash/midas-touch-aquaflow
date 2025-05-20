@@ -4,31 +4,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ProjectCard from "../ui/ProjectCard";
 import { motion, useInView } from "framer-motion";
-
-// Sample project data
-const featuredProjects = [
-  {
-    id: "community-borehole",
-    title: "Community Borehole Project",
-    location: "Lagos State",
-    category: "Borehole",
-    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2500"
-  },
-  {
-    id: "industrial-water-filtration",
-    title: "Industrial Water Filtration",
-    location: "Abuja",
-    category: "Filtration",
-    image: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80&w=2500"
-  },
-  {
-    id: "agricultural-irrigation-system",
-    title: "Agricultural Irrigation System",
-    location: "Kano",
-    category: "Irrigation",
-    image: "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=2500"
-  },
-];
+import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // Project categories for filtering
 const categories = [
@@ -40,19 +17,121 @@ const categories = [
   "Community"
 ];
 
+// Interface for project data
+interface Project {
+  id: string;
+  title: string;
+  location: string;
+  category: string;
+  image: string;
+  imageUrls?: string[];
+  type?: string;
+  description?: string;
+  createdAt?: any;
+  completedAt?: any;
+}
+
 const ProjectsSection = () => {
   const [activeCategory, setActiveCategory] = useState("All Projects");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
+
+  // Fetch projects from Firestore
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      try {
+        const projectsQuery = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(projectsQuery);
+        
+        const projectsList: Project[] = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title || "Untitled Project",
+            location: data.location || "Nigeria",
+            category: data.category || data.type || "Borehole",
+            image: data.imageUrls && data.imageUrls.length > 0 ? data.imageUrls[0] : "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2500",
+            imageUrls: data.imageUrls || [],
+            type: data.type || "",
+            description: data.description || "",
+            createdAt: data.createdAt,
+            completedAt: data.completedAt,
+          };
+        });
+
+        // Combine with hardcoded demo projects (for testing, can be removed later)
+        const demoProjects = [
+          {
+            id: "community-borehole",
+            title: "Community Borehole Project",
+            location: "Lagos State",
+            category: "Borehole",
+            image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2500"
+          },
+          {
+            id: "industrial-water-filtration",
+            title: "Industrial Water Filtration",
+            location: "Abuja",
+            category: "Filtration",
+            image: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80&w=2500"
+          },
+          {
+            id: "agricultural-irrigation-system",
+            title: "Agricultural Irrigation System",
+            location: "Kano",
+            category: "Irrigation",
+            image: "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=2500"
+          },
+        ];
+        
+        // If there are real projects from Firestore, show those first
+        const allProjects = projectsList.length > 0 ? [...projectsList] : [...projectsList, ...demoProjects];
+        setProjects(allProjects);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        // Fallback to demo projects if there's an error
+        setProjects([
+          {
+            id: "community-borehole",
+            title: "Community Borehole Project",
+            location: "Lagos State",
+            category: "Borehole",
+            image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2500"
+          },
+          {
+            id: "industrial-water-filtration",
+            title: "Industrial Water Filtration",
+            location: "Abuja",
+            category: "Filtration",
+            image: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80&w=2500"
+          },
+          {
+            id: "agricultural-irrigation-system",
+            title: "Agricultural Irrigation System",
+            location: "Kano",
+            category: "Irrigation",
+            image: "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=2500"
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05,  // Reduced stagger time
-        delayChildren: 0.2,     // Reduced delay
-        duration: 0.3,          // Faster animation
+        staggerChildren: 0.05,
+        delayChildren: 0.2,
+        duration: 0.3,
       }
     }
   };
@@ -62,15 +141,7 @@ const ProjectsSection = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.3 } // Faster animation
-    }
-  };
-
-  const handleViewAllClick = () => {
-    // If on home page, use a Link to navigate
-    // If already on projects page, this section will be hidden
-    if (window.location.pathname !== '/projects') {
-      // Handled by the Link
+      transition: { duration: 0.3 }
     }
   };
 
@@ -123,17 +194,25 @@ const ProjectsSection = () => {
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
         >
-          {featuredProjects
-            .filter(project => activeCategory === "All Projects" || project.category === activeCategory)
-            .map((project, index) => (
-              <motion.div key={project.id} variants={itemVariants}>
-                <ProjectCard {...project} index={index} />
-              </motion.div>
+          {loading ? (
+            // Loading placeholders
+            Array(3).fill(0).map((_, index) => (
+              <motion.div key={`loading-${index}`} variants={itemVariants}
+                className="bg-gray-200 dark:bg-gray-800 animate-pulse h-80 sm:h-64 md:h-72 rounded-lg"
+              />
             ))
-          }
+          ) : (
+            projects
+              .filter(project => activeCategory === "All Projects" || project.category === activeCategory)
+              .map((project, index) => (
+                <motion.div key={project.id} variants={itemVariants}>
+                  <ProjectCard {...project} index={index} />
+                </motion.div>
+              ))
+          )}
           
           {/* If filtered results are empty */}
-          {featuredProjects.filter(
+          {!loading && projects.filter(
             project => activeCategory === "All Projects" || project.category === activeCategory
           ).length === 0 && (
             <motion.div 

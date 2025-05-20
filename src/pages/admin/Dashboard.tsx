@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Send, MessageSquare, FileText } from "lucide-react";
+import { Send, MessageSquare, FileText, Plus } from "lucide-react";
+import ProjectUploadModal from "@/components/admin/ProjectUploadModal";
 
 // Define types for service requests
 type RequestStatus = "pending" | "in-progress" | "completed";
@@ -74,6 +74,9 @@ const AdminDashboard = () => {
   // For request details dialog
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<BaseRequest | null>(null);
+
+  // For project upload modal
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   
   useEffect(() => {
     document.title = "Admin Dashboard | Midas Touch";
@@ -417,6 +420,29 @@ const AdminDashboard = () => {
           </Card>
         </div>
         
+        {/* Project Management Section */}
+        <Card className="mb-8">
+          <CardHeader className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+            <div>
+              <CardTitle className="text-2xl">Projects</CardTitle>
+              <CardDescription>Manage website projects portfolio</CardDescription>
+            </div>
+            <Button 
+              onClick={() => setIsProjectModalOpen(true)}
+              className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Project
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center text-gray-500 py-6">
+              Click "Add New Project" to upload new completed projects to showcase on the website.
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Service Requests Card */}
         <Card className="mb-8">
           <CardHeader className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div>
@@ -1025,6 +1051,12 @@ const AdminDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* Project Upload Modal */}
+      <ProjectUploadModal 
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+      />
     </div>
   );
 };

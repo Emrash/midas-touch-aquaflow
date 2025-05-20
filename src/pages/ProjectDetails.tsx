@@ -1,349 +1,319 @@
 
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import Map from "../components/ui/Map";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowLeft, Calendar, MapPin } from "lucide-react";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-// This would normally come from a CMS or API
-const projectsData = [
-  {
-    id: "community-borehole",
-    title: "Community Borehole Project",
-    location: "Lagos State",
-    coordinates: [6.5244, 3.3792], // Lagos coordinates
-    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2500",
-    category: "Borehole",
-    description: "A comprehensive water supply solution for a growing community in Lagos State. This project involved geophysical surveys, drilling to 120 meters depth, and installation of a complete water filtration system.",
-    tools: ["Geophysical Survey Equipment", "DTH Hammer Drill", "Water Quality Analyzers", "Solar Pumping System"],
-    duration: "3 weeks",
-    galleryImages: [
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2500",
-      "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80&w=2500"
-    ],
-    testimonial: {
-      quote: "Midas Touch provided an exceptional service that transformed our community's access to clean water.",
-      author: "Community Leader, Lagos"
-    }
-  },
-  {
-    id: "industrial-water-filtration",
-    title: "Industrial Water Filtration",
-    location: "Abuja",
-    coordinates: [9.0765, 7.3986], // Abuja coordinates
-    image: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80&w=2500",
-    category: "Filtration",
-    description: "Design and implementation of an advanced water filtration system for a manufacturing facility in Abuja. The system handles 50,000 liters per day with multi-stage filtration including reverse osmosis.",
-    tools: ["Reverse Osmosis Units", "Carbon Filtration", "UV Purification", "Smart Monitoring System"],
-    duration: "6 weeks",
-    galleryImages: [
-      "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80&w=2500",
-      "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=2500"
-    ]
-  },
-  {
-    id: "agricultural-irrigation-system",
-    title: "Agricultural Irrigation System",
-    location: "Kano",
-    coordinates: [12.0022, 8.5920], // Kano coordinates
-    image: "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=2500",
-    category: "Irrigation",
-    description: "Development of a smart irrigation system for a 500-hectare farm in Kano. The system includes boreholes, solar-powered pumps, and automated distribution networks.",
-    tools: ["Solar Panels", "Smart Irrigation Controllers", "Drip Irrigation System", "Soil Moisture Sensors"],
-    duration: "8 weeks",
-    galleryImages: [
-      "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=2500",
-      "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=80&w=2500"
-    ]
-  },
-  {
-    id: "hospital-water-supply",
-    title: "Hospital Water Supply",
-    location: "Port Harcourt",
-    coordinates: [4.8156, 7.0498], // Port Harcourt coordinates
-    image: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=80&w=2500",
-    category: "Infrastructure",
-    description: "Installation of a medical-grade water supply system for a major hospital in Port Harcourt. The system includes redundant filtration, continuous monitoring, and emergency backup.",
-    tools: ["Medical-Grade Filters", "UV Disinfection", "Automatic Chlorination", "Backup Generator"],
-    duration: "4 weeks",
-    galleryImages: [
-      "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=80&w=2500",
-      "https://images.unsplash.com/photo-1504893524553-b855bce32c67?auto=format&fit=crop&q=80&w=2500"
-    ]
-  },
-  {
-    id: "mining-site-water-management",
-    title: "Mining Site Water Management",
-    location: "Plateau State",
-    coordinates: [9.2182, 9.5236], // Plateau State coordinates
-    image: "https://images.unsplash.com/photo-1504893524553-b855bce32c67?auto=format&fit=crop&q=80&w=2500",
-    category: "Mining",
-    description: "Comprehensive water management solution for a mining operation in Plateau State. Includes dewatering systems, water treatment, and recycling infrastructure.",
-    tools: ["Industrial Pumps", "Heavy-Duty Filtration", "Water Recycling System", "Environmental Monitoring"],
-    duration: "12 weeks",
-    galleryImages: [
-      "https://images.unsplash.com/photo-1504893524553-b855bce32c67?auto=format&fit=crop&q=80&w=2500",
-      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&q=80&w=2500"
-    ]
-  },
-  {
-    id: "rural-water-access-program",
-    title: "Rural Water Access Program",
-    location: "Enugu State",
-    coordinates: [6.4298, 7.5444], // Enugu State coordinates
-    image: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&q=80&w=2500",
-    category: "Community",
-    description: "Implementation of a rural water access program covering 12 villages in Enugu State. The project includes multiple boreholes, hand pumps, and community training.",
-    tools: ["Hand Pumps", "Community Training Materials", "Water Quality Test Kits", "Solar Pumping"],
-    duration: "16 weeks",
-    galleryImages: [
-      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&q=80&w=2500",
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2500"
-    ]
-  }
-];
+interface ProjectDetails {
+  id: string;
+  title: string;
+  location: string;
+  description: string;
+  imageUrls: string[];
+  category: string;
+  completedAt?: any;
+  type?: string;
+}
 
 const ProjectDetails = () => {
-  const { id } = useParams();
-  const [project, setProject] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const [project, setProject] = useState<ProjectDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState("");
   
   useEffect(() => {
-    // Simulate API call to fetch project details
-    const fetchProject = async () => {
+    const fetchProjectDetails = async () => {
+      if (!id) return;
+      
       setLoading(true);
-      // In a real app, this would be an API call
-      const foundProject = projectsData.find(p => p.id === id);
       
-      if (foundProject) {
-        setProject(foundProject);
-        // Set page title
-        document.title = `${foundProject.title} | Midas Touch Drills and Projects Consult`;
-      } else {
-        // Project not found
-        navigate('/not-found');
+      try {
+        // Try to get the project from Firestore first
+        const docRef = doc(db, "projects", id);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const projectData: ProjectDetails = {
+            id: docSnap.id,
+            title: data.title || "Project Details",
+            location: data.location || "Nigeria",
+            description: data.description || "No description available",
+            imageUrls: data.imageUrls || [],
+            category: data.category || data.type || "Borehole",
+            completedAt: data.completedAt,
+            type: data.type
+          };
+          
+          setProject(projectData);
+          if (projectData.imageUrls && projectData.imageUrls.length > 0) {
+            setSelectedImage(projectData.imageUrls[0]);
+          }
+          
+          document.title = `${projectData.title} | Midas Touch Projects`;
+        } else {
+          // If not found by ID, try querying by local ID
+          const projectsQuery = query(
+            collection(db, "projects"), 
+            where("localId", "==", id)
+          );
+          
+          const querySnapshot = await getDocs(projectsQuery);
+          
+          if (!querySnapshot.empty) {
+            // Use the first match
+            const docData = querySnapshot.docs[0].data();
+            const projectData: ProjectDetails = {
+              id: querySnapshot.docs[0].id,
+              title: docData.title || "Project Details",
+              location: docData.location || "Nigeria",
+              description: docData.description || "No description available",
+              imageUrls: docData.imageUrls || [],
+              category: docData.category || docData.type || "Borehole",
+              completedAt: docData.completedAt,
+              type: docData.type
+            };
+            
+            setProject(projectData);
+            if (projectData.imageUrls && projectData.imageUrls.length > 0) {
+              setSelectedImage(projectData.imageUrls[0]);
+            }
+            
+            document.title = `${projectData.title} | Midas Touch Projects`;
+          } else {
+            // If still not found, use demo data
+            const demoProject = getDemoProject(id);
+            setProject(demoProject);
+            setSelectedImage(demoProject.imageUrls[0]);
+            document.title = `${demoProject.title} | Midas Touch Projects`;
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching project details:", error);
+        const demoProject = getDemoProject(id || "");
+        setProject(demoProject);
+        setSelectedImage(demoProject.imageUrls[0]);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
     
-    fetchProject();
-  }, [id, navigate]);
+    fetchProjectDetails();
+    
+    return () => {
+      document.title = "Midas Touch Drills and Projects Consult";
+    };
+  }, [id]);
 
-  const goToPreviousImage = () => {
-    setCurrentImageIndex(prevIndex => 
-      prevIndex === 0 ? (project?.galleryImages.length - 1) : prevIndex - 1
-    );
+  // Function to get a demo project if no real project is found
+  const getDemoProject = (projectId: string): ProjectDetails => {
+    const demoProjects: Record<string, ProjectDetails> = {
+      "community-borehole": {
+        id: "community-borehole",
+        title: "Community Borehole Project",
+        location: "Lagos State",
+        description: `This community borehole project was initiated to provide clean drinking water to a rural community in Lagos State. The project involved extensive geological surveys, drilling to a depth of 120 meters, and installation of a solar-powered pumping system. The borehole now serves over 500 community members daily, significantly reducing waterborne diseases in the area.`,
+        imageUrls: [
+          "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=2500",
+          "https://images.unsplash.com/photo-1509600110300-21b9d5fedeb7?auto=format&fit=crop&q=80&w=1500",
+          "https://images.unsplash.com/photo-1565301660306-29e08751cc53?auto=format&fit=crop&q=80&w=1500"
+        ],
+        category: "Borehole"
+      },
+      "industrial-water-filtration": {
+        id: "industrial-water-filtration",
+        title: "Industrial Water Filtration System",
+        location: "Abuja",
+        description: `We designed and installed a comprehensive water filtration system for a major manufacturing facility in Abuja. The system processes 50,000 liters of water daily, removing contaminants and ensuring compliance with environmental regulations. The multi-stage filtration includes sediment removal, carbon filtration, reverse osmosis, and UV purification.`,
+        imageUrls: [
+          "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80&w=2500",
+          "https://images.unsplash.com/photo-1609252509192-3d3be950e4bd?auto=format&fit=crop&q=80&w=1500",
+          "https://images.unsplash.com/photo-1543393470-b2b2334c2794?auto=format&fit=crop&q=80&w=1500"
+        ],
+        category: "Filtration"
+      },
+      "agricultural-irrigation-system": {
+        id: "agricultural-irrigation-system",
+        title: "Agricultural Irrigation System",
+        location: "Kano",
+        description: `This large-scale agricultural irrigation project covered 200 hectares of farmland in Kano. We implemented a drip irrigation system that reduces water usage by 60% compared to traditional methods while increasing crop yields by 40%. The system includes automated controls, water sensors, and weather monitoring to optimize irrigation scheduling.`,
+        imageUrls: [
+          "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=2500",
+          "https://images.unsplash.com/photo-1615209853186-e4bd66602508?auto=format&fit=crop&q=80&w=1500",
+          "https://images.unsplash.com/photo-1555788168-9036209055bd?auto=format&fit=crop&q=80&w=1500"
+        ],
+        category: "Irrigation"
+      },
+      // Default case
+      "default": {
+        id: "default-project",
+        title: "Project Details",
+        location: "Nigeria",
+        description: "Project details not found.",
+        imageUrls: ["https://images.unsplash.com/photo-1550091345-8c587a37b33d?auto=format&fit=crop&q=80&w=1500"],
+        category: "Borehole"
+      }
+    };
+    
+    return demoProjects[projectId] || demoProjects.default;
   };
 
-  const goToNextImage = () => {
-    setCurrentImageIndex(prevIndex => 
-      prevIndex === (project?.galleryImages.length - 1) ? 0 : prevIndex + 1
-    );
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return "N/A";
+    
+    try {
+      const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+    } catch (error) {
+      return "N/A";
+    }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="container mx-auto px-4 py-20 flex justify-center items-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-mdpc-gold"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!project) {
-    return null; // This should not happen as we redirect to not-found
-  }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="pt-24">
-        {/* Hero Section */}
-        <div 
-          className="relative h-[40vh] md:h-[50vh] bg-cover bg-center" 
-          style={{ backgroundImage: `url(${project.image})` }}
-        >
-          <div className="absolute inset-0 bg-mdpc-brown-dark bg-opacity-60 flex items-center">
-            <div className="container mx-auto px-4">
-              <Button 
-                variant="outline" 
-                className="mb-4 text-white border-white hover:bg-white hover:text-mdpc-brown-dark"
-                onClick={() => navigate('/#projects')}
+      
+      <main className="flex-grow pt-24">
+        {loading ? (
+          <div className="container mx-auto px-4 py-12">
+            <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg mb-8"></div>
+            <div className="w-3/4 h-8 bg-gray-200 animate-pulse rounded mb-4"></div>
+            <div className="w-1/4 h-6 bg-gray-200 animate-pulse rounded mb-8"></div>
+            <div className="w-full h-24 bg-gray-200 animate-pulse rounded"></div>
+          </div>
+        ) : (
+          project && (
+            <div className="container mx-auto px-4 py-12">
+              <Button
+                variant="ghost"
+                className="mb-6 flex items-center hover:bg-gray-100 dark:hover:bg-gray-800"
+                onClick={() => navigate(-1)}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Projects
               </Button>
-              <h1 className="text-3xl md:text-5xl font-heading font-bold text-white mb-2">{project.title}</h1>
-              <div className="flex items-center text-white">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                <span className="text-lg">{project.location}</span>
-                <span className="mx-2">|</span>
-                <span className="bg-mdpc-gold text-white text-xs font-bold uppercase tracking-wider px-2 py-1 rounded">
-                  {project.category}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Project Content */}
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              <h2 className="text-2xl font-heading font-bold text-mdpc-blue mb-4">Project Overview</h2>
-              <p className="text-mdpc-brown-dark mb-8">{project.description}</p>
-
-              {/* Image Gallery */}
-              <div className="mb-10">
-                <h2 className="text-2xl font-heading font-bold text-mdpc-blue mb-4">Project Gallery</h2>
-                <div className="relative">
-                  <div className="overflow-hidden rounded-lg shadow-lg h-64 md:h-96">
-                    <img 
-                      src={project.galleryImages[currentImageIndex]} 
-                      alt={`${project.title} gallery ${currentImageIndex + 1}`}
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6"
+              >
+                <div className="space-y-4">
+                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden aspect-video">
+                    <img
+                      src={selectedImage}
+                      alt={project.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  {project.galleryImages.length > 1 && (
-                    <div className="absolute top-1/2 left-0 right-0 flex justify-between transform -translate-y-1/2 px-4">
-                      <button 
-                        onClick={goToPreviousImage}
-                        className="bg-white/80 hover:bg-white text-mdpc-brown-dark rounded-full p-2 focus:outline-none"
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={goToNextImage}
-                        className="bg-white/80 hover:bg-white text-mdpc-brown-dark rounded-full p-2 focus:outline-none"
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                      </button>
+                  
+                  {project.imageUrls.length > 1 && (
+                    <div className="flex overflow-x-auto space-x-2 pb-2">
+                      {project.imageUrls.map((image, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImage(image)}
+                          className={`flex-shrink-0 w-20 h-16 rounded-md overflow-hidden transition-all ${
+                            selectedImage === image
+                              ? "ring-2 ring-mdpc-gold scale-105"
+                              : "opacity-70 hover:opacity-100"
+                          }`}
+                        >
+                          <img
+                            src={image}
+                            alt={`Project image ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
                     </div>
                   )}
-                  <div className="absolute bottom-4 right-4 bg-white/80 px-3 py-1 rounded-full text-sm text-mdpc-brown-dark">
-                    {currentImageIndex + 1} / {project.galleryImages.length}
-                  </div>
                 </div>
-              </div>
-
-              {/* Testimonial if available */}
-              {project.testimonial && (
-                <div className="mb-10 bg-blue-50 dark:bg-mdpc-blue-darkest/30 border-l-4 border-mdpc-blue dark:border-mdpc-gold p-6 rounded-lg">
-                  <blockquote className="text-mdpc-brown-dark dark:text-mdpc-brown-light italic mb-4">
-                    "{project.testimonial.quote}"
-                  </blockquote>
-                  <div className="font-medium text-mdpc-blue dark:text-mdpc-gold">- {project.testimonial.author}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              {/* Project Details */}
-              <div className="bg-white dark:bg-mdpc-brown-darkest/50 rounded-lg shadow-lg p-6 mb-8">
-                <h3 className="text-xl font-heading font-bold text-mdpc-blue dark:text-mdpc-gold mb-4">Project Details</h3>
                 
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-semibold text-mdpc-gold mb-1">Category</h4>
-                    <p className="text-mdpc-brown-dark dark:text-mdpc-brown-light">{project.category}</p>
+                <div>
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-heading font-bold mb-4 text-mdpc-brown-dark dark:text-white">
+                    {project.title}
+                  </h1>
+                  
+                  <div className="flex flex-wrap gap-3 mb-6">
+                    <div className="flex items-center text-mdpc-brown dark:text-mdpc-brown-light">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      {project.location}
+                    </div>
+                    
+                    {project.completedAt && (
+                      <div className="flex items-center text-mdpc-brown dark:text-mdpc-brown-light">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        Completed: {formatDate(project.completedAt)}
+                      </div>
+                    )}
+                    
+                    <span className="bg-mdpc-gold text-white px-2 py-0.5 rounded-md text-sm font-medium">
+                      {project.category || project.type}
+                    </span>
                   </div>
                   
-                  <div>
-                    <h4 className="text-sm font-semibold text-mdpc-gold mb-1">Duration</h4>
-                    <p className="text-mdpc-brown-dark dark:text-mdpc-brown-light">{project.duration}</p>
+                  <div className="prose dark:prose-invert max-w-none">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                      {project.description}
+                    </p>
                   </div>
                   
-                  <div>
-                    <h4 className="text-sm font-semibold text-mdpc-gold mb-1">Tools & Equipment</h4>
-                    <ul className="list-disc list-inside text-mdpc-brown-dark dark:text-mdpc-brown-light">
-                      {project.tools.map((tool: string, index: number) => (
-                        <li key={index}>{tool}</li>
-                      ))}
-                    </ul>
+                  <div className="mt-8">
+                    <Button
+                      className="bg-mdpc-blue hover:bg-mdpc-blue-dark text-white"
+                      onClick={() => navigate("/#contact")}
+                    >
+                      Request Similar Project
+                    </Button>
                   </div>
                 </div>
-              </div>
-
-              {/* Location Map */}
-              <div className="bg-white dark:bg-mdpc-brown-darkest/50 rounded-lg shadow-lg p-6">
-                <h3 className="text-xl font-heading font-bold text-mdpc-blue dark:text-mdpc-gold mb-4">Project Location</h3>
-                <Map 
-                  center={project.coordinates}
-                  zoom={12}
-                  markers={[{ position: project.coordinates, popup: project.title, isMain: true }]}
-                  height="250px"
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Related Projects */}
-          <div className="mt-12">
-            <h2 className="text-2xl font-heading font-bold text-mdpc-blue dark:text-mdpc-gold mb-6">Related Projects</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projectsData
-                .filter(p => p.category === project.category && p.id !== project.id)
-                .slice(0, 3)
-                .map((relatedProject, index) => (
-                  <div 
-                    key={index} 
-                    className="bg-white dark:bg-mdpc-brown-darkest/50 rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-transform hover:scale-105"
-                    onClick={() => navigate(`/projects/${relatedProject.id}`)}
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="mt-12 border-t pt-8 dark:border-gray-700"
+              >
+                <h2 className="text-xl font-heading font-semibold mb-4 dark:text-white">
+                  Interested in similar projects?
+                </h2>
+                <p className="mb-6 text-gray-700 dark:text-gray-300">
+                  Contact our team for a consultation or to discuss your specific project requirements.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <Button
+                    className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white"
+                    onClick={() => navigate("/#contact")}
                   >
-                    <div className="h-48 overflow-hidden">
-                      <img 
-                        src={relatedProject.image} 
-                        alt={relatedProject.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-lg font-heading font-bold text-mdpc-blue dark:text-mdpc-gold">{relatedProject.title}</h3>
-                      <div className="flex items-center text-mdpc-brown-dark dark:text-mdpc-brown-light text-sm mt-2">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        {relatedProject.location}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    Contact Us
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-mdpc-brown/30 dark:border-mdpc-gold/20"
+                    onClick={() => navigate("/services")}
+                  >
+                    View Our Services
+                  </Button>
+                </div>
+              </motion.div>
             </div>
-          </div>
-
-          {/* CTA */}
-          <div className="mt-16 py-10 px-6 bg-mdpc-blue dark:bg-mdpc-brown-dark/70 rounded-lg text-center">
-            <h2 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4">Ready to Start Your Own Project?</h2>
-            <p className="text-blue-100 dark:text-mdpc-brown-lightest mb-6 max-w-2xl mx-auto">
-              Contact our team of experts to discuss your water solution needs and get a customized proposal.
-            </p>
-            <Button 
-              className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-semibold py-3 px-8"
-              onClick={() => navigate('/#contact')}
-            >
-              Request a Consultation
-            </Button>
-          </div>
-        </div>
+          )
+        )}
       </main>
+      
       <Footer />
     </div>
   );

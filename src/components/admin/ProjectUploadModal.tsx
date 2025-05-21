@@ -7,9 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { X, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
-import { db, storage } from "@/lib/firebase";
-import { collection, addDoc, Timestamp, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -18,6 +17,10 @@ interface ProjectUploadModalProps {
   onClose: () => void;
   onSuccess?: () => void;
 }
+
+// Cloudinary configuration
+const CLOUDINARY_CLOUD_NAME = "dv0smnf2d"; // Replace with your cloud name
+const CLOUDINARY_UPLOAD_PRESET = "idyequuh"; // Replace with your upload preset
 
 const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalProps) => {
   const [title, setTitle] = useState("");
@@ -63,32 +66,51 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
   
+  // New function to upload images to Cloudinary
+  const uploadToCloudinary = async (file: File): Promise<string> => {
+    try {
+      console.log(`Starting Cloudinary upload for file: ${file.name}`);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      
+      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+      console.log("Sending request to Cloudinary:", cloudinaryUrl);
+      
+      const response = await fetch(cloudinaryUrl, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Cloudinary upload failed:", errorText);
+        throw new Error(`Cloudinary upload failed: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log("Cloudinary upload successful:", data);
+      
+      return data.secure_url;
+    } catch (error) {
+      console.error("Error uploading to Cloudinary:", error);
+      throw error;
+    }
+  };
+  
   const uploadImages = async (): Promise<string[]> => {
     if (selectedFiles.length === 0) return [];
     
     const imageUrls: string[] = [];
-    console.log(`Starting upload of ${selectedFiles.length} images...`);
+    console.log(`Starting upload of ${selectedFiles.length} images to Cloudinary...`);
     
     for (const file of selectedFiles) {
       try {
-        // Create a reference with a unique name
-        const fileName = `${Date.now()}-${file.name}`;
-        console.log(`Uploading image: ${fileName}`);
-        
-        const storageRef = ref(storage, `project-images/${fileName}`);
-        console.log("Storage reference created:", storageRef);
-        
-        // Upload the file
-        console.log("Starting uploadBytes operation...");
-        const snapshot = await uploadBytes(storageRef, file);
-        console.log("Image uploaded successfully:", snapshot.metadata.name);
-        
-        // Get the download URL
-        console.log("Fetching download URL...");
-        const downloadUrl = await getDownloadURL(storageRef);
-        console.log("Generated download URL:", downloadUrl);
-        
-        imageUrls.push(downloadUrl);
+        console.log(`Uploading image: ${file.name}`);
+        const imageUrl = await uploadToCloudinary(file);
+        console.log("Generated Cloudinary URL:", imageUrl);
+        imageUrls.push(imageUrl);
       } catch (error) {
         console.error("Error uploading image:", error);
         toast({
@@ -99,7 +121,7 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
       }
     }
     
-    console.log(`Successfully uploaded ${imageUrls.length} images.`);
+    console.log(`Successfully uploaded ${imageUrls.length} images to Cloudinary.`);
     return imageUrls;
   };
   
@@ -139,8 +161,8 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
     console.log("Starting project upload process...");
     
     try {
-      // 1. Upload images to Firebase Storage
-      console.log("Step 1: Uploading images to Firebase storage...");
+      // 1. Upload images to Cloudinary
+      console.log("Step 1: Uploading images to Cloudinary...");
       console.log("Form data being submitted:", { 
         title, description, projectType, category, 
         location, completedDate,

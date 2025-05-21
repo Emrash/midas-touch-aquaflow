@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -81,22 +82,22 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1">
-          <NavLink to="/" active={isActive("/")}>
+          <NavLink to="/" active={isActive("/")} isScrolled={isScrolled}>
             Home
           </NavLink>
-          <NavLink to="/services" active={isActive("/services")}>
+          <NavLink to="/services" active={isActive("/services")} isScrolled={isScrolled}>
             Services
           </NavLink>
-          <NavLink to="/drilling" active={isActive("/drilling")}>
+          <NavLink to="/drilling" active={isActive("/drilling")} isScrolled={isScrolled}>
             Drilling
           </NavLink>
-          <NavLink to="/logistics" active={isActive("/logistics")}>
+          <NavLink to="/logistics" active={isActive("/logistics")} isScrolled={isScrolled}>
             Logistics
           </NavLink>
-          <NavLink to="/projects" active={isActive("/projects")}>
+          <NavLink to="/projects" active={isActive("/projects")} isScrolled={isScrolled}>
             Projects
           </NavLink>
-          <NavLink to="/#contact" active={isActive("#contact")}>
+          <NavLink to="/#contact" active={isActive("#contact")} isScrolled={isScrolled}>
             Contact
           </NavLink>
           <ThemeToggle />
@@ -231,9 +232,10 @@ interface NavLinkProps {
   to: string;
   active: boolean;
   children: React.ReactNode;
+  isScrolled: boolean;
 }
 
-const NavLink = ({ to, active, children }: NavLinkProps) => (
+const NavLink = ({ to, active, children, isScrolled }: NavLinkProps) => (
   <Link 
     to={to} 
     className={`py-2 px-3 rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-mdpc-brown-dark/20 ${
@@ -248,7 +250,13 @@ const NavLink = ({ to, active, children }: NavLinkProps) => (
   </Link>
 );
 
-const MobileNavLink = ({ to, active, children }: NavLinkProps) => (
+interface MobileNavLinkProps {
+  to: string;
+  active: boolean;
+  children: React.ReactNode;
+}
+
+const MobileNavLink = ({ to, active, children }: MobileNavLinkProps) => (
   <Link
     to={to}
     className={`block py-2 px-3 text-mdpc-brown-dark dark:text-mdpc-brown-light hover:bg-gray-50 dark:hover:bg-mdpc-brown-darkest/70 rounded-md ${

@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { Truck, Package, Clock, MapPin, TruckIcon, CheckCircle } from "lucide-react";
 import { useConsultation } from "@/contexts/ConsultationContext";
 import { motion } from "framer-motion";
-import drillingImage1 from "../../assets/driiling1.jpg";
+import drillingImage1 from "../../assets/drilling1.jpg";
 import img2 from "../../assets/img2.png";
 
 const LogisticsHome = () => {

@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Droplet, Filter, Gauge, Activity, Wrench, FileText } from "lucide-react";
 import { useConsultation } from "@/contexts/ConsultationContext";
 import { motion } from "framer-motion";
-import drillingImage1 from "../../assets/driiling1.jpg";
+import drillingImage1 from "../../assets/drilling1.jpg";
 import drillingImage2 from "../../assets/drilling2.jpg";
 import drillingImage3 from "../../assets/drilling3.jpg";
 import drillingRig from "../../assets/drilling_rig.jpg";

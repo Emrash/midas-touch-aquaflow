@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PhoneIcon, MailIcon, MapPinIcon, ArrowRightIcon } from "lucide-react";
 import Map from "../ui/Map";
-import drillingImage1 from "../../assets/driiling1.jpg";
+import drillingImage1 from "../../assets/drilling1.jpg";
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({

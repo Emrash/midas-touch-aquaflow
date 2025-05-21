@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
-import drillingImage1 from "../../assets/driiling1.jpg";
+import drillingImage1 from "../../assets/drilling1.jpg";
 
 const AboutSection = () => {
   const sectionRef = useRef<HTMLElement>(null);

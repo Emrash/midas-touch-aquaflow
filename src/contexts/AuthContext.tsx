@@ -45,10 +45,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       // Check if user is admin using case-insensitive comparison
-      setIsAdmin(
-        !!currentUser?.email && 
-        currentUser.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()
-      );
+      const adminStatus = !!currentUser?.email && 
+        currentUser.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase();
+      
+      setIsAdmin(adminStatus);
+      console.log("User authenticated:", currentUser?.email);
+      console.log("Is admin:", adminStatus);
       setLoading(false);
     });
 

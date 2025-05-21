@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { X, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { collection, addDoc, Timestamp, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,13 +76,16 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
         console.log(`Uploading image: ${fileName}`);
         
         const storageRef = ref(storage, `project-images/${fileName}`);
+        console.log("Storage reference created:", storageRef);
         
         // Upload the file
+        console.log("Starting uploadBytes operation...");
         const snapshot = await uploadBytes(storageRef, file);
         console.log("Image uploaded successfully:", snapshot.metadata.name);
         
         // Get the download URL
-        const downloadUrl = await getDownloadURL(snapshot.ref);
+        console.log("Fetching download URL...");
+        const downloadUrl = await getDownloadURL(storageRef);
         console.log("Generated download URL:", downloadUrl);
         
         imageUrls.push(downloadUrl);
@@ -138,17 +141,17 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
     try {
       // 1. Upload images to Firebase Storage
       console.log("Step 1: Uploading images to Firebase storage...");
+      console.log("Form data being submitted:", { 
+        title, description, projectType, category, 
+        location, completedDate,
+        imageCount: selectedFiles.length
+      });
+      
       const imageUrls = await uploadImages();
       
       if (imageUrls.length === 0) {
-        console.log("Error: No images were successfully uploaded");
-        setIsUploading(false);
-        toast({
-          title: "Upload failed",
-          description: "Failed to upload project images, please try again",
-          variant: "destructive"
-        });
-        return; // Early return if image upload failed
+        console.error("Error: No images were successfully uploaded");
+        throw new Error("Failed to upload project images");
       }
       
       // 2. Create project document in Firestore
@@ -160,8 +163,8 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
         category: category || "",
         type: projectType,
         imageUrls,
-        completedAt: completedDate ? new Date(completedDate) : Timestamp.now(),
-        createdAt: Timestamp.now(),
+        completedAt: completedDate ? new Date(completedDate) : new Date(),
+        createdAt: serverTimestamp(), // Use server timestamp for more accuracy
         createdBy: user?.uid || "admin",
         userId: user?.uid || "admin"
       };

@@ -37,8 +37,11 @@ const AdminRedirect = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Only redirect if at root or auth pages and user is admin
-    if (isAdmin && (location.pathname === "/" || location.pathname === "/auth")) {
+    // Only redirect if at auth page and user is admin
+    // Explicitly check that we're not already on the admin route
+    console.log("Admin redirect check: path =", location.pathname, "isAdmin =", isAdmin);
+    if (isAdmin && location.pathname === "/auth" && !location.pathname.includes('/admin')) {
+      console.log("Redirecting admin to dashboard");
       navigate("/admin");
     }
   }, [isAdmin, navigate, location.pathname]);

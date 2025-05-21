@@ -8,7 +8,8 @@ import {
   User,
   LogIn,
   Menu,
-  X
+  X,
+  Home
 } from "lucide-react";
 import logoImage from "@/assets/logo.jpg";
 
@@ -22,6 +23,8 @@ const Navbar = () => {
   const isActive = (path: string) => {
     return location.pathname === path || location.hash === path;
   };
+
+  const isAdminDashboard = location.pathname === '/admin';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,10 +57,15 @@ const Navbar = () => {
     }
   };
 
+  const handleBackToWebsite = () => {
+    console.log("Navigating back to website home page");
+    navigate('/');
+  };
+
   return (
     <header
       className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled
+        isScrolled || isAdminDashboard
           ? "bg-white/95 dark:bg-mdpc-brown-darkest/95 shadow-md backdrop-blur-sm py-2"
           : "bg-transparent py-4"
       }`}
@@ -82,24 +90,39 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1">
-          <NavLink to="/" active={isActive("/")} isScrolled={isScrolled}>
-            Home
-          </NavLink>
-          <NavLink to="/services" active={isActive("/services")} isScrolled={isScrolled}>
-            Services
-          </NavLink>
-          <NavLink to="/drilling" active={isActive("/drilling")} isScrolled={isScrolled}>
-            Drilling
-          </NavLink>
-          <NavLink to="/logistics" active={isActive("/logistics")} isScrolled={isScrolled}>
-            Logistics
-          </NavLink>
-          <NavLink to="/projects" active={isActive("/projects")} isScrolled={isScrolled}>
-            Projects
-          </NavLink>
-          <NavLink to="/#contact" active={isActive("#contact")} isScrolled={isScrolled}>
-            Contact
-          </NavLink>
+          {/* Show Back to Website button when on admin dashboard */}
+          {isAdminDashboard ? (
+            <Button
+              onClick={handleBackToWebsite}
+              variant="outline"
+              className="mr-2 flex items-center gap-2"
+            >
+              <Home size={18} />
+              Back to Website
+            </Button>
+          ) : (
+            <>
+              <NavLink to="/" active={isActive("/")} isScrolled={isScrolled || isAdminDashboard}>
+                Home
+              </NavLink>
+              <NavLink to="/services" active={isActive("/services")} isScrolled={isScrolled || isAdminDashboard}>
+                Services
+              </NavLink>
+              <NavLink to="/drilling" active={isActive("/drilling")} isScrolled={isScrolled || isAdminDashboard}>
+                Drilling
+              </NavLink>
+              <NavLink to="/logistics" active={isActive("/logistics")} isScrolled={isScrolled || isAdminDashboard}>
+                Logistics
+              </NavLink>
+              <NavLink to="/projects" active={isActive("/projects")} isScrolled={isScrolled || isAdminDashboard}>
+                Projects
+              </NavLink>
+              <NavLink to="/#contact" active={isActive("#contact")} isScrolled={isScrolled || isAdminDashboard}>
+                Contact
+              </NavLink>
+            </>
+          )}
+          
           <ThemeToggle />
           
           {user ? (
@@ -138,16 +161,18 @@ const Navbar = () => {
             </Button>
           )}
           
-          <Button
-            onClick={handleGetQuote}
-            className={`ml-4 ${
-              isScrolled
-                ? "bg-mdpc-gold hover:bg-mdpc-gold-dark"
-                : "bg-white/10 hover:bg-white/20 border border-white/30"
-            } text-white font-medium`}
-          >
-            Request Consultation
-          </Button>
+          {!isAdminDashboard && (
+            <Button
+              onClick={handleGetQuote}
+              className={`ml-4 ${
+                isScrolled || isAdminDashboard
+                  ? "bg-mdpc-gold hover:bg-mdpc-gold-dark"
+                  : "bg-white/10 hover:bg-white/20 border border-white/30"
+              } text-white font-medium`}
+            >
+              Request Consultation
+            </Button>
+          )}
         </nav>
 
         {/* Mobile Menu Button */}
@@ -177,24 +202,37 @@ const Navbar = () => {
       >
         <div className="container mx-auto px-4 py-4 bg-white/95 dark:bg-mdpc-brown-darkest/95 shadow-lg">
           <div className="flex flex-col space-y-2">
-            <MobileNavLink to="/" active={isActive("/")}>
-              Home
-            </MobileNavLink>
-            <MobileNavLink to="/services" active={isActive("/services")}>
-              Services
-            </MobileNavLink>
-            <MobileNavLink to="/drilling" active={isActive("/drilling")}>
-              Drilling
-            </MobileNavLink>
-            <MobileNavLink to="/logistics" active={isActive("/logistics")}>
-              Logistics
-            </MobileNavLink>
-            <MobileNavLink to="/projects" active={isActive("/projects")}>
-              Projects
-            </MobileNavLink>
-            <MobileNavLink to="/#contact" active={isActive("#contact")}>
-              Contact
-            </MobileNavLink>
+            {isAdminDashboard ? (
+              <Button
+                onClick={handleBackToWebsite}
+                variant="outline"
+                className="w-full justify-start flex items-center gap-2"
+              >
+                <Home size={18} />
+                Back to Website
+              </Button>
+            ) : (
+              <>
+                <MobileNavLink to="/" active={isActive("/")}>
+                  Home
+                </MobileNavLink>
+                <MobileNavLink to="/services" active={isActive("/services")}>
+                  Services
+                </MobileNavLink>
+                <MobileNavLink to="/drilling" active={isActive("/drilling")}>
+                  Drilling
+                </MobileNavLink>
+                <MobileNavLink to="/logistics" active={isActive("/logistics")}>
+                  Logistics
+                </MobileNavLink>
+                <MobileNavLink to="/projects" active={isActive("/projects")}>
+                  Projects
+                </MobileNavLink>
+                <MobileNavLink to="/#contact" active={isActive("#contact")}>
+                  Contact
+                </MobileNavLink>
+              </>
+            )}
             
             {user ? (
               <>
@@ -218,9 +256,11 @@ const Navbar = () => {
               </MobileNavLink>
             )}
             
-            <Button onClick={handleGetQuote} className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-medium mt-2">
-              Request Consultation
-            </Button>
+            {!isAdminDashboard && (
+              <Button onClick={handleGetQuote} className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white font-medium mt-2">
+                Request Consultation
+              </Button>
+            )}
           </div>
         </div>
       </div>

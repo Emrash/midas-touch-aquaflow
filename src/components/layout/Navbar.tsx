@@ -239,7 +239,9 @@ const NavLink = ({ to, active, children }: NavLinkProps) => (
     className={`py-2 px-3 rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-mdpc-brown-dark/20 ${
       active 
         ? "text-mdpc-blue dark:text-mdpc-gold font-medium" 
-        : "text-mdpc-brown-dark dark:text-mdpc-brown-light"
+        : isScrolled 
+            ? "text-mdpc-brown-dark dark:text-mdpc-brown-light"
+            : "text-white dark:text-mdpc-brown-light font-medium"
     }`}
   >
     {children}

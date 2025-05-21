@@ -1,6 +1,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import drillingImage1 from "../../assets/driiling1.jpg";
 
 const AboutSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -69,7 +70,7 @@ const AboutSection = () => {
           >
             <div className="aspect-w-4 aspect-h-3 overflow-hidden">
               <img 
-                src="https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&q=80&w=2500" 
+                src={drillingImage1} 
                 alt="MDPC Water project" 
                 className="object-cover w-full h-full transform hover:scale-105 transition-transform duration-700"
               />

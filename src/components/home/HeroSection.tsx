@@ -163,8 +163,12 @@ const HeroSection = () => {
             className="mb-6 flex justify-center"
             variants={itemVariants}
           >
-            <div className="h-20 w-20 bg-gradient-to-br from-mdpc-gold to-mdpc-gold-dark rounded-full flex items-center justify-center animate-float-slow shadow-gold-glow">
-              <span className="text-white font-heading font-bold text-3xl">MD</span>
+            <div className="h-20 w-20 bg-gradient-to-br from-mdpc-gold to-mdpc-gold-dark rounded-full flex items-center justify-center animate-float-slow shadow-gold-glow overflow-hidden">
+              <img 
+                src={logo} 
+                alt="Midas Touch Drills" 
+                className="h-16 w-16 object-cover rounded-full"
+              />
             </div>
           </motion.div>
           

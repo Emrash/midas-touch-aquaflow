@@ -166,7 +166,7 @@ const Navbar = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => signOut()}
-                className={`${isScrolled || !isHomepage ? "border-mdpc-brown/30 dark:border-mdpc-gold/20 text-mdpc-brown-dark dark:text-mdpc-brown-light" : "border-white/40 text-white dark:border-mdpc-gold/20 dark:text-mdpc-brown-light"}`}
+                className={`${isScrolled || !isHomepage ? "border-mdpc-brown/30 dark:border-mdpc-gold/20 text-mdpc-brown-dark dark:text-mdpc-brown-light" : "border-white/40 text-black dark:border-mdpc-gold/20 dark:text-mdpc-brown-light"}`}
               >
                 Logout
               </Button>
@@ -175,7 +175,7 @@ const Navbar = () => {
             <Button
               asChild
               variant="outline"
-              className={`ml-4 flex items-center gap-2 ${isScrolled || !isHomepage ? "border-mdpc-brown/30 dark:border-mdpc-gold/20 text-mdpc-brown-dark dark:text-mdpc-brown-light" : "border-white/40 text-white dark:border-mdpc-gold/20 dark:text-mdpc-brown-light"}`}
+              className={`ml-4 flex items-center gap-2 ${isScrolled || !isHomepage ? "border-mdpc-brown/30 dark:border-mdpc-gold/20 text-mdpc-brown-dark dark:text-mdpc-brown-light" : "border-black/40 text-white dark:border-mdpc-gold/20 dark:text-mdpc-brown-light"}`}
             >
               <Link to="/auth">
                 <LogIn size={18} />

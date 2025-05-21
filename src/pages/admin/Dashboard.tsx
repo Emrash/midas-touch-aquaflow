@@ -375,7 +375,7 @@ const AdminDashboard = () => {
             <Button 
               variant="outline" 
               onClick={() => navigate("/")}
-              className="border-white text-white hover:bg-white/10"
+              className="border-white text-white/5 hover:bg-white/10"
             >
               Back to Website
             </Button>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useConsultation } from "@/contexts/ConsultationContext";
 import backgroundCover from "../../assets/background_cover.jpg";
+import logo from "../../assets/logo.jpg";
 
 const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);

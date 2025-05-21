@@ -91,7 +91,7 @@ const ContactSection = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="John Doe"
+                    placeholder="Rasheed Yekini"
                     required
                     className="form-input"
                   />
@@ -104,7 +104,7 @@ const ContactSection = () => {
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="john@example.com"
+                    placeholder="you@example.com"
                     required
                     className="form-input"
                   />
@@ -119,7 +119,7 @@ const ContactSection = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="+234 (0) 123 456 7890"
+                    placeholder="+234 (0) 803 465 6063"
                     className="form-input"
                   />
                 </div>
@@ -205,8 +205,8 @@ const ContactSection = () => {
                   <div>
                     <h4 className="font-semibold text-mdpc-brown-dark dark:text-mdpc-brown-light">Office Address</h4>
                     <p className="text-gray-600 dark:text-gray-300">
-                      123 Osogbo Business District<br />
-                      Osun State, Nigeria
+                      84C, Oba Iyiola Oyewale Shopping Complex, MDS Behind Solaris Pharmacy<br />
+                      Osogbo, Osun State, Nigeria
                     </p>
                   </div>
                 </div>
@@ -217,8 +217,8 @@ const ContactSection = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold text-mdpc-brown-dark dark:text-mdpc-brown-light">Phone Number</h4>
-                    <p className="text-gray-600 dark:text-gray-300">+234 (0) 123 456 7890</p>
-                    <p className="text-gray-600 dark:text-gray-300">+234 (0) 987 654 3210</p>
+                    <p className="text-gray-600 dark:text-gray-300">+234 (0) 803 465 6063</p>
+              
                   </div>
                 </div>
                 
@@ -228,7 +228,7 @@ const ContactSection = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold text-mdpc-brown-dark dark:text-mdpc-brown-light">Email Address</h4>
-                    <p className="text-gray-600 dark:text-gray-300">info@midastouchdrills.com</p>
+                    <p className="text-gray-600 dark:text-gray-300">idris1987@yahoo.com</p>
                     <p className="text-gray-600 dark:text-gray-300">support@midastouchdrills.com</p>
                   </div>
                 </div>

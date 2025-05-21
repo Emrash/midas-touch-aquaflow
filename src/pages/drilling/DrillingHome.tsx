@@ -88,7 +88,7 @@ const DrillingHome = () => {
       <Navbar />
       <main>
         <section className="bg-gradient-to-b from-mdpc-blue to-blue-900 text-white py-20 md:py-32 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 opacity-10">
             <img src={drillingRig} alt="Drilling Equipment" className="w-full h-full object-cover" />
           </div>
           <div className="container mx-auto px-4 relative z-10">

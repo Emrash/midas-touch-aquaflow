@@ -1,5 +1,4 @@
-
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { X, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, updateDoc, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -16,13 +15,13 @@ interface ProjectUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  projectToEdit?: any;
 }
 
-// Cloudinary configuration
-const CLOUDINARY_CLOUD_NAME = "dlmrufbme"; // Cloud Name
-const CLOUDINARY_UPLOAD_PRESET = "midas-touch"; // Upload Preset
+const CLOUDINARY_CLOUD_NAME = "dlmrufbme";
+const CLOUDINARY_UPLOAD_PRESET = "midas-touch";
 
-const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalProps) => {
+const ProjectUploadModal = ({ isOpen, onClose, onSuccess, projectToEdit }: ProjectUploadModalProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [projectType, setProjectType] = useState<"drilling" | "logistics" | "">("");
@@ -32,84 +31,79 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
   const [isUploading, setIsUploading] = useState(false);
   const { user } = useAuth();
   
-  // For image upload
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (projectToEdit) {
+      setTitle(projectToEdit.title || "");
+      setDescription(projectToEdit.description || "");
+      setProjectType(projectToEdit.type || "");
+      setCategory(projectToEdit.category || "");
+      setLocation(projectToEdit.location || "");
+      setExistingImageUrls(projectToEdit.imageUrls || []);
+      setCompletedDate(
+        projectToEdit.completedAt 
+          ? new Date(projectToEdit.completedAt).toISOString().split('T')[0] 
+          : ""
+      );
+    } else {
+      resetForm();
+    }
+  }, [projectToEdit]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     
-    // Limit to 3 images maximum
-    const newFiles = files.slice(0, 3);
-    setSelectedFiles(prev => {
-      const combined = [...prev, ...newFiles];
-      return combined.slice(0, 3); // Ensure maximum 3 files
-    });
+    const newFiles = files.slice(0, 3 - selectedFiles.length);
+    setSelectedFiles(prev => [...prev, ...newFiles]);
     
-    // Generate previews
     newFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPreviewUrls(prev => {
-          const combined = [...prev, e.target?.result as string];
-          return combined.slice(0, 3); // Ensure maximum 3 previews
-        });
+        setPreviewUrls(prev => [...prev, e.target?.result as string]);
       };
       reader.readAsDataURL(file);
     });
   };
   
-  const removeImage = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  const removeImage = (index: number, isExisting: boolean = false) => {
+    if (isExisting) {
+      setExistingImageUrls(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+      setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    }
   };
   
-  // Function to upload images to Cloudinary
   const uploadToCloudinary = async (file: File): Promise<string> => {
-    try {
-      console.log(`Starting Cloudinary upload for file: ${file.name}`);
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      
-      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-      console.log("Sending request to Cloudinary:", cloudinaryUrl);
-      
-      const response = await fetch(cloudinaryUrl, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Cloudinary upload failed:", errorText);
-        throw new Error(`Cloudinary upload failed: ${response.status} ${errorText}`);
-      }
-      
-      const data = await response.json();
-      console.log("Cloudinary upload successful:", data);
-      
-      return data.secure_url;
-    } catch (error) {
-      console.error("Error uploading to Cloudinary:", error);
-      throw error;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: formData }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Image upload failed');
     }
+    
+    const data = await response.json();
+    return data.secure_url;
   };
   
   const uploadImages = async (): Promise<string[]> => {
     if (selectedFiles.length === 0) return [];
     
     const imageUrls: string[] = [];
-    console.log(`Starting upload of ${selectedFiles.length} images to Cloudinary...`);
-    
     for (const file of selectedFiles) {
       try {
-        console.log(`Uploading image: ${file.name}`);
         const imageUrl = await uploadToCloudinary(file);
-        console.log("Generated Cloudinary URL:", imageUrl);
         imageUrls.push(imageUrl);
       } catch (error) {
         console.error("Error uploading image:", error);
@@ -120,8 +114,6 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
         });
       }
     }
-    
-    console.log(`Successfully uploaded ${imageUrls.length} images to Cloudinary.`);
     return imageUrls;
   };
   
@@ -134,6 +126,7 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
     setCompletedDate("");
     setSelectedFiles([]);
     setPreviewUrls([]);
+    setExistingImageUrls([]);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,7 +141,7 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
       return;
     }
     
-    if (selectedFiles.length === 0) {
+    if (existingImageUrls.length + selectedFiles.length === 0) {
       toast({
         title: "No images selected",
         description: "Please upload at least one project image",
@@ -158,65 +151,50 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
     }
     
     setIsUploading(true);
-    console.log("Starting project upload process...");
     
     try {
-      // 1. Upload images to Cloudinary
-      console.log("Step 1: Uploading images to Cloudinary...");
-      console.log("Form data being submitted:", { 
-        title, description, projectType, category, 
-        location, completedDate,
-        imageCount: selectedFiles.length
-      });
+      const uploadedUrls = await uploadImages();
+      const allImageUrls = [...existingImageUrls, ...uploadedUrls];
       
-      const imageUrls = await uploadImages();
-      
-      if (imageUrls.length === 0) {
-        console.error("Error: No images were successfully uploaded");
-        throw new Error("Failed to upload project images");
-      }
-      
-      // 2. Create project document in Firestore
-      console.log("Step 2: Creating project document in Firestore...");
       const projectData = {
         title,
         description,
         location,
         category: category || "",
         type: projectType,
-        imageUrls,
+        imageUrls: allImageUrls,
         completedAt: completedDate ? new Date(completedDate) : new Date(),
-        createdAt: serverTimestamp(), // Use server timestamp for more accuracy
-        createdBy: user?.uid || "admin",
-        userId: user?.uid || "admin"
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid || "admin"
       };
       
-      console.log("Project data being saved:", projectData);
-      
-      // Add document to "projects" collection
-      const docRef = await addDoc(collection(db, "projects"), projectData);
-      
-      console.log("Success! Project added with ID:", docRef.id);
-      
-      toast({
-        title: "Project added successfully",
-        description: "The new project has been published to the website",
-      });
-      
-      // Reset form
-      resetForm();
-      
-      // Close modal & refresh data if callback provided
-      if (onSuccess) {
-        console.log("Calling onSuccess callback to refresh projects list");
-        onSuccess();
+      if (projectToEdit) {
+        await updateDoc(doc(db, "projects", projectToEdit.id), projectData);
+        toast({
+          title: "Project updated",
+          description: "The project has been updated successfully",
+        });
+      } else {
+        await addDoc(collection(db, "projects"), {
+          ...projectData,
+          createdAt: serverTimestamp(),
+          createdBy: user?.uid || "admin",
+          userId: user?.uid || "admin"
+        });
+        toast({
+          title: "Project added",
+          description: "The new project has been published to the website",
+        });
       }
+      
+      resetForm();
+      if (onSuccess) onSuccess();
       onClose();
       
     } catch (error: any) {
-      console.error("Error adding project:", error);
+      console.error("Error saving project:", error);
       toast({
-        title: "Failed to add project",
+        title: "Failed to save project",
         description: error.message || "There was an error saving your project. Please try again.",
         variant: "destructive"
       });
@@ -229,16 +207,19 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Project</DialogTitle>
+          <DialogTitle>
+            {projectToEdit ? "Edit Project" : "Add New Project"}
+          </DialogTitle>
           <DialogDescription>
-            Create a new project to showcase on the website. Add images, details and publish.
+            {projectToEdit 
+              ? "Update this project's details" 
+              : "Create a new project to showcase on the website"}
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Project Title */}
               <div className="space-y-2">
                 <Label htmlFor="title">Project Title *</Label>
                 <Input
@@ -250,10 +231,13 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
                 />
               </div>
               
-              {/* Project Type */}
               <div className="space-y-2">
                 <Label htmlFor="type">Project Type *</Label>
-                <Select value={projectType} onValueChange={(value: "drilling" | "logistics") => setProjectType(value)}>
+                <Select 
+                  value={projectType} 
+                  onValueChange={(value: "drilling" | "logistics") => setProjectType(value)}
+                  required
+                >
                   <SelectTrigger id="type">
                     <SelectValue placeholder="Select project type" />
                   </SelectTrigger>
@@ -266,7 +250,6 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Location */}
               <div className="space-y-2">
                 <Label htmlFor="location">Project Location *</Label>
                 <Input
@@ -278,7 +261,6 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
                 />
               </div>
               
-              {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
                 <Input
@@ -290,7 +272,6 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
               </div>
             </div>
             
-            {/* Completion Date */}
             <div className="space-y-2">
               <Label htmlFor="date">Completion Date</Label>
               <Input
@@ -301,7 +282,6 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
               />
             </div>
             
-            {/* Project Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Project Description *</Label>
               <Textarea
@@ -314,7 +294,6 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
               />
             </div>
             
-            {/* Image Upload */}
             <div className="space-y-3">
               <Label>Project Images *</Label>
               <div className="border-2 border-dashed rounded-md border-gray-300 dark:border-gray-700 p-6">
@@ -348,26 +327,55 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
                 </div>
               </div>
               
-              {/* Image Previews */}
+              {/* Existing images */}
+              {existingImageUrls.length > 0 && (
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium mb-2">Existing Images</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {existingImageUrls.map((url, index) => (
+                      <div key={`existing-${index}`} className="relative rounded-md overflow-hidden h-24 bg-gray-100">
+                        <img
+                          src={url}
+                          alt={`Existing ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index, true)}
+                          className="absolute top-1 right-1 bg-black/70 rounded-full p-1"
+                          title="Remove image"
+                        >
+                          <X className="h-4 w-4 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* New image previews */}
               {previewUrls.length > 0 && (
-                <div className="grid grid-cols-3 gap-3 mt-3">
-                  {previewUrls.map((url, index) => (
-                    <div key={index} className="relative rounded-md overflow-hidden h-24 bg-gray-100">
-                      <img
-                        src={url}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 bg-black/70 rounded-full p-1"
-                        title="Remove image"
-                      >
-                        <X className="h-4 w-4 text-white" />
-                      </button>
-                    </div>
-                  ))}
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium mb-2">New Images</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {previewUrls.map((url, index) => (
+                      <div key={`new-${index}`} className="relative rounded-md overflow-hidden h-24 bg-gray-100">
+                        <img
+                          src={url}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 bg-black/70 rounded-full p-1"
+                          title="Remove image"
+                        >
+                          <X className="h-4 w-4 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -384,15 +392,22 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
             </Button>
             <Button 
               type="submit" 
-              disabled={isUploading || !title || !description || !projectType || !location || selectedFiles.length === 0}
+              disabled={
+                isUploading || 
+                !title || 
+                !description || 
+                !projectType || 
+                !location || 
+                (existingImageUrls.length + selectedFiles.length === 0)
+              }
             >
               {isUploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Uploading...
+                  {projectToEdit ? "Updating..." : "Uploading..."}
                 </>
               ) : (
-                "Add Project"
+                projectToEdit ? "Update Project" : "Add Project"
               )}
             </Button>
           </DialogFooter>

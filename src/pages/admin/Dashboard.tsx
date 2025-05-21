@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate, Link } from "react-router-dom";
-import { collection, onSnapshot, doc, updateDoc, query, orderBy, Timestamp, addDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, query, orderBy, Timestamp, addDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Send, MessageSquare, FileText, Plus, Home } from "lucide-react";
+import { Send, MessageSquare, FileText, Plus, Home, Trash2, Edit, ImageIcon } from "lucide-react";
 import ProjectUploadModal from "@/components/admin/ProjectUploadModal";
 
 // Define types for service requests
@@ -79,6 +78,10 @@ const AdminDashboard = () => {
   // For project upload modal
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [refreshProjectsFlag, setRefreshProjectsFlag] = useState(false);
+
+  // For project deletion and editing
+    const [projects, setProjects] = useState<any[]>([]);
+  const [editingProject, setEditingProject] = useState<any>(null);
   
   const handleBackToWebsite = () => {
     navigate("/");
@@ -101,6 +104,8 @@ const AdminDashboard = () => {
       navigate("/");
       return;
     }
+
+
 
     // Fetch drilling requests
     const drillingQuery = query(collection(db, "drillingRequests"), orderBy("createdAt", "desc"));
@@ -194,6 +199,56 @@ const AdminDashboard = () => {
       unsubscribeConsultation();
     };
   }, [isAdmin, navigate]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const projectsQuery = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    const unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
+      const projectsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        completedAt: doc.data().completedAt?.toDate?.() || null
+      }));
+      setProjects(projectsData);
+    });
+
+    return () => unsubscribeProjects();
+  }, [isAdmin, refreshProjectsFlag]);
+
+   // Add these functions
+  const deleteProject = async (projectId: string) => {
+    if (!window.confirm("Are you sure you want to delete this project? This action cannot be undone.")) return;
+    
+    try {
+      await deleteDoc(doc(db, "projects", projectId));
+      toast({
+        title: "Project deleted",
+        description: "The project has been removed successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting project: ", error);
+      toast({
+        title: "Error deleting project",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditProject = (project: any) => {
+    setEditingProject(project);
+    setIsProjectModalOpen(true);
+  };
+
+  const formatProjectDate = (date: Date | null) => {
+    if (!date) return "No date specified";
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  };
+
 
   const updateRequestStatus = async (collectionName: string, id: string, status: RequestStatus) => {
     try {
@@ -385,7 +440,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-heading font-bold">Admin Dashboard</h1>
-              <p className="text-sm opacity-80">Welcome, {user?.email}</p>
+              <p className="text-sm opacity-80">Welcome, {user?.displayName}</p>
             </div>
             <Button 
               variant="outline" 
@@ -437,26 +492,84 @@ const AdminDashboard = () => {
         </div>
         
         {/* Project Management Section */}
-        <Card className="mb-8">
-          <CardHeader className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <div>
-              <CardTitle className="text-2xl">Projects</CardTitle>
-              <CardDescription>Manage website projects portfolio</CardDescription>
-            </div>
-            <Button 
-              onClick={() => setIsProjectModalOpen(true)}
-              className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Project
-            </Button>
-          </CardHeader>
-          <CardContent>
+        {/* Project Management Section - Updated */}
+      <Card className="mb-8">
+        <CardHeader className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div>
+            <CardTitle className="text-2xl">Projects</CardTitle>
+            <CardDescription>Manage website projects portfolio</CardDescription>
+          </div>
+          <Button 
+            onClick={() => {
+              setEditingProject(null);
+              setIsProjectModalOpen(true);
+            }}
+            className="bg-mdpc-gold hover:bg-mdpc-gold-dark text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Project
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {projects.length === 0 ? (
             <div className="text-center text-gray-500 py-6">
-              Click "Add New Project" to upload new completed projects to showcase on the website.
+              No projects found. Click "Add New Project" to get started.
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projects.map(project => (
+                <div key={project.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div className="relative aspect-video bg-gray-100">
+                    {project.imageUrls?.[0] ? (
+                      <img 
+                        src={project.imageUrls[0]} 
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <ImageIcon className="h-12 w-12" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium text-lg line-clamp-1">{project.title}</h3>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-500 hover:text-gray-700"
+                          onClick={() => handleEditProject(project)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-500 hover:text-red-500"
+                          onClick={() => deleteProject(project.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{project.description}</p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">
+                        {project.type === "drilling" ? "Drilling" : "Logistics"}
+                      </Badge>
+                      <span className="text-xs text-gray-500">
+                        {formatProjectDate(project.completedAt)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
         
         {/* Service Requests Card */}
         <Card className="mb-8">
@@ -1080,10 +1193,16 @@ const AdminDashboard = () => {
       </Dialog>
       
       {/* Project Upload Modal */}
+      
+      {/* Project Upload Modal - Updated to handle editing */}
       <ProjectUploadModal 
         isOpen={isProjectModalOpen}
-        onClose={() => setIsProjectModalOpen(false)}
+        onClose={() => {
+          setIsProjectModalOpen(false);
+          setEditingProject(null);
+        }}
         onSuccess={handleProjectAdded}
+        projectToEdit={editingProject}
       />
     </div>
   );

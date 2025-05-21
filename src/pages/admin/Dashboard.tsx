@@ -1,10 +1,11 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { collection, onSnapshot, doc, updateDoc, query, orderBy, Timestamp, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "@/hooks/use-toast";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Send, MessageSquare, FileText, Plus } from "lucide-react";
+import { Send, MessageSquare, FileText, Plus, Home } from "lucide-react";
 import ProjectUploadModal from "@/components/admin/ProjectUploadModal";
 
 // Define types for service requests
@@ -77,6 +78,20 @@ const AdminDashboard = () => {
 
   // For project upload modal
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [refreshProjectsFlag, setRefreshProjectsFlag] = useState(false);
+  
+  const handleBackToWebsite = () => {
+    navigate("/");
+  };
+  
+  const handleProjectAdded = () => {
+    // Toggle flag to trigger a refresh in components that depend on projects data
+    setRefreshProjectsFlag(prev => !prev);
+    toast({
+      title: "Project added successfully",
+      description: "Your project is now visible on the website",
+    });
+  };
   
   useEffect(() => {
     document.title = "Admin Dashboard | Midas Touch";
@@ -362,6 +377,117 @@ const AdminDashboard = () => {
   const pendingRequestsCount = drillingRequests.filter(req => req.status === "pending").length +
     logisticsRequests.filter(req => req.status === "pending").length +
     consultationRequests.filter(req => req.status === "pending").length;
+    
+  const openNotesDialog = (id: string, collectionName: string, notes: string = "") => {
+    setCurrentRequest({ id, collectionName, notes });
+    setAdminNotes(notes);
+    setIsNotesOpen(true);
+  };
+
+  const saveAdminNotes = async () => {
+    if (!currentRequest) return;
+    
+    try {
+      await updateDoc(doc(db, currentRequest.collectionName, currentRequest.id), { 
+        adminNotes: adminNotes 
+      });
+      
+      toast({
+        title: "Notes saved",
+        description: "Admin notes have been saved successfully"
+      });
+      
+      setIsNotesOpen(false);
+    } catch (error) {
+      console.error("Error saving admin notes: ", error);
+      toast({
+        title: "Error saving notes",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openMessageDialog = (userId: string, fullName: string, email: string) => {
+    console.log("Opening message dialog for user:", userId, fullName, email);
+    setMessageRecipient({
+      id: userId,
+      name: fullName || "Client",
+      email: email || ""
+    });
+    setMessageSubject(`Update on your service request`);
+    setMessageText("");
+    setIsMessageOpen(true);
+  };
+
+  const sendMessage = async () => {
+    if (!messageRecipient || !messageText.trim()) return;
+    
+    console.log("Sending message to:", messageRecipient);
+    setSendingMessage(true);
+    try {
+      // Create a new message document
+      const messageData = {
+        sender: user?.email || "Midas Touch Admin",
+        recipientId: messageRecipient.id,
+        subject: messageSubject || "Update from Midas Touch",
+        message: messageText,
+        timestamp: Timestamp.now(),
+        read: false
+      };
+      
+      await addDoc(collection(db, "messages"), messageData);
+      console.log("Message sent successfully:", messageData);
+      
+      toast({
+        title: "Message Sent",
+        description: `Message sent to ${messageRecipient.name}`,
+      });
+      
+      setIsMessageOpen(false);
+      setMessageText("");
+      setMessageSubject("");
+      setMessageRecipient(null);
+    } catch (error: any) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error Sending Message",
+        description: error.message || "There was a problem sending your message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const viewRequestDetails = (request: BaseRequest) => {
+    setSelectedRequest(request);
+    setIsDetailsOpen(true);
+  };
+  
+  const getServiceTypeName = (request: BaseRequest) => {
+    if (request.serviceType === "drilling") {
+      const subType = request.requestDetails?.serviceSubType || "";
+      const serviceTypes: {[key: string]: string} = {
+        "borehole-drilling": "Borehole Drilling",
+        "geophysical-survey": "Geophysical Survey",
+        "water-treatment": "Water Treatment",
+        "pump-installation": "Pump Installation",
+        "borehole-maintenance": "Borehole Maintenance",
+      };
+      return serviceTypes[subType] || "Drilling";
+    } else if (request.serviceType === "logistics") {
+      const subType = request.requestDetails?.serviceSubType || "";
+      const serviceTypes: {[key: string]: string} = {
+        "bulky-delivery": "Bulky Delivery",
+        "doorstep-delivery": "Doorstep Delivery",
+        "express-delivery": "Express Delivery",
+        "water-equipment": "Water Equipment Transport",
+      };
+      return serviceTypes[subType] || "Logistics";
+    } else {
+      return request.serviceType || "Consultation";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -374,9 +500,10 @@ const AdminDashboard = () => {
             </div>
             <Button 
               variant="outline" 
-              onClick={() => navigate("/")}
-              className="border-white text-white/5 hover:bg-white/10"
+              onClick={handleBackToWebsite}
+              className="border-white text-white hover:bg-white/20 flex items-center gap-2"
             >
+              <Home size={16} />
               Back to Website
             </Button>
           </div>
@@ -823,6 +950,17 @@ const AdminDashboard = () => {
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Fixed Position Back to Website Button (Mobile Friendly) */}
+        <div className="fixed bottom-6 right-6 md:hidden">
+          <Button
+            onClick={handleBackToWebsite}
+            size="lg"
+            className="bg-mdpc-blue hover:bg-mdpc-blue-dark text-white shadow-lg rounded-full h-14 w-14 flex items-center justify-center"
+          >
+            <Home size={24} />
+          </Button>
+        </div>
       </main>
       
       {/* Admin Notes Dialog */}
@@ -1056,6 +1194,7 @@ const AdminDashboard = () => {
       <ProjectUploadModal 
         isOpen={isProjectModalOpen}
         onClose={() => setIsProjectModalOpen(false)}
+        onSuccess={handleProjectAdded}
       />
     </div>
   );

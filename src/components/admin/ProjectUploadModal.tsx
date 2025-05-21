@@ -67,17 +67,24 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
     if (selectedFiles.length === 0) return [];
     
     const imageUrls: string[] = [];
+    console.log(`Starting upload of ${selectedFiles.length} images...`);
     
     for (const file of selectedFiles) {
       try {
         // Create a reference with a unique name
-        const storageRef = ref(storage, `project-images/${Date.now()}-${file.name}`);
+        const fileName = `${Date.now()}-${file.name}`;
+        console.log(`Uploading image: ${fileName}`);
+        
+        const storageRef = ref(storage, `project-images/${fileName}`);
         
         // Upload the file
         const snapshot = await uploadBytes(storageRef, file);
+        console.log("Image uploaded successfully:", snapshot.metadata.name);
         
         // Get the download URL
         const downloadUrl = await getDownloadURL(snapshot.ref);
+        console.log("Generated download URL:", downloadUrl);
+        
         imageUrls.push(downloadUrl);
       } catch (error) {
         console.error("Error uploading image:", error);
@@ -89,7 +96,19 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
       }
     }
     
+    console.log(`Successfully uploaded ${imageUrls.length} images.`);
     return imageUrls;
+  };
+  
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setProjectType("");
+    setCategory("");
+    setLocation("");
+    setCompletedDate("");
+    setSelectedFiles([]);
+    setPreviewUrls([]);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,22 +133,31 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
     }
     
     setIsUploading(true);
+    console.log("Starting project upload process...");
     
     try {
       // 1. Upload images to Firebase Storage
+      console.log("Step 1: Uploading images to Firebase storage...");
       const imageUrls = await uploadImages();
       
       if (imageUrls.length === 0) {
+        console.log("Error: No images were successfully uploaded");
         setIsUploading(false);
+        toast({
+          title: "Upload failed",
+          description: "Failed to upload project images, please try again",
+          variant: "destructive"
+        });
         return; // Early return if image upload failed
       }
       
       // 2. Create project document in Firestore
+      console.log("Step 2: Creating project document in Firestore...");
       const projectData = {
         title,
         description,
         location,
-        category,
+        category: category || "",
         type: projectType,
         imageUrls,
         completedAt: completedDate ? new Date(completedDate) : Timestamp.now(),
@@ -138,8 +166,12 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
         userId: user?.uid || "admin"
       };
       
+      console.log("Project data being saved:", projectData);
+      
       // Add document to "projects" collection
-      await addDoc(collection(db, "projects"), projectData);
+      const docRef = await addDoc(collection(db, "projects"), projectData);
+      
+      console.log("Success! Project added with ID:", docRef.id);
       
       toast({
         title: "Project added successfully",
@@ -147,24 +179,20 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
       });
       
       // Reset form
-      setTitle("");
-      setDescription("");
-      setProjectType("");
-      setCategory("");
-      setLocation("");
-      setCompletedDate("");
-      setSelectedFiles([]);
-      setPreviewUrls([]);
+      resetForm();
       
       // Close modal & refresh data if callback provided
-      if (onSuccess) onSuccess();
+      if (onSuccess) {
+        console.log("Calling onSuccess callback to refresh projects list");
+        onSuccess();
+      }
       onClose();
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding project:", error);
       toast({
         title: "Failed to add project",
-        description: "There was an error saving your project. Please try again.",
+        description: error.message || "There was an error saving your project. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -321,10 +349,18 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
           </div>
           
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isUploading}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose} 
+              disabled={isUploading}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isUploading}>
+            <Button 
+              type="submit" 
+              disabled={isUploading || !title || !description || !projectType || !location || selectedFiles.length === 0}
+            >
               {isUploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

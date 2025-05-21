@@ -66,15 +66,15 @@ const AboutSection = () => {
             initial={{ opacity: 0, x: -50 }}
             animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-            className="relative overflow-hidden rounded-xl shadow-premium"
+            className="relative overflow-hidden rounded-xl shadow-premium w-full h-full"
           >
-            <div className="aspect-w-4 aspect-h-3 overflow-hidden">
+            <div className="aspect-w-4 aspect-h-3 w-full h-full">
               <img 
                 src={drillingImage1} 
                 alt="MDPC Water project" 
                 className="object-cover w-full h-full transform hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-tr from-mdpc-blue-dark/70 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-mdpc-blue-dark/60 to-transparent"></div>
             </div>
             
             {/* Enhanced floating stat cards with animations */}
@@ -82,7 +82,7 @@ const AboutSection = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="absolute bottom-4 left-4 glass-card p-4 animate-float-slow shadow-premium"
+              className="absolute bottom-4 left-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-4 rounded-lg animate-float-slow shadow-lg"
             >
               <div className="text-mdpc-blue dark:text-mdpc-blue-light font-bold text-3xl">10+</div>
               <div className="text-mdpc-brown-dark dark:text-gray-200 text-sm">Years of Excellence</div>
@@ -92,7 +92,7 @@ const AboutSection = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
               transition={{ duration: 0.5, delay: 0.8 }}
-              className="absolute top-4 right-4 glass-card p-4 animate-float-slow shadow-premium"
+              className="absolute top-4 right-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-4 rounded-lg animate-float-slow shadow-lg"
               style={{ animationDelay: "1s" }}
             >
               <div className="text-mdpc-blue dark:text-mdpc-blue-light font-bold text-3xl">500+</div>
@@ -104,9 +104,9 @@ const AboutSection = () => {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.5, delay: 1 }}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-mdpc-gold/20 backdrop-blur-md rounded-full h-24 w-24 flex items-center justify-center animate-pulse-glow"
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-mdpc-gold/80 backdrop-blur-md rounded-full h-24 w-24 flex items-center justify-center animate-pulse-glow shadow-lg"
             >
-              <div className="text-mdpc-gold font-heading font-bold text-lg text-center">
+              <div className="text-white font-heading font-bold text-lg text-center">
                 Premium<br/>Quality
               </div>
             </motion.div>
@@ -140,7 +140,7 @@ const AboutSection = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
-                className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg hover:shadow-md transition-shadow duration-300"
+                className="bg-white dark:bg-gray-800 shadow-md p-4 rounded-lg hover:shadow-lg transition-shadow duration-300"
               >
                 <h4 className="font-heading font-bold text-mdpc-blue dark:text-mdpc-blue-light mb-2">Our Vision</h4>
                 <p className="text-sm text-mdpc-brown-dark dark:text-gray-300">To be Nigeria's most trusted water solutions provider, known for excellence and innovation in every project we undertake.</p>
@@ -149,7 +149,7 @@ const AboutSection = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.5, delay: 0.7 }}
-                className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg hover:shadow-md transition-shadow duration-300"
+                className="bg-white dark:bg-gray-800 shadow-md p-4 rounded-lg hover:shadow-lg transition-shadow duration-300"
               >
                 <h4 className="font-heading font-bold text-mdpc-blue dark:text-mdpc-blue-light mb-2">Our Mission</h4>
                 <p className="text-sm text-mdpc-brown-dark dark:text-gray-300">Delivering sustainable water solutions with integrity, efficiency and technical expertise that improves quality of life.</p>
@@ -161,7 +161,7 @@ const AboutSection = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.4, delay: 0.8 }}
-                className="bg-mdpc-gold/10 text-mdpc-gold dark:bg-mdpc-gold/20 px-3 py-1 rounded-full text-sm font-medium"
+                className="bg-mdpc-gold/20 text-mdpc-gold-dark dark:bg-mdpc-gold/20 dark:text-mdpc-gold px-3 py-1 rounded-full text-sm font-medium"
               >
                 Integrity
               </motion.span>
@@ -169,7 +169,7 @@ const AboutSection = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.4, delay: 0.9 }}
-                className="bg-mdpc-blue/10 text-mdpc-blue dark:bg-mdpc-blue/20 dark:text-mdpc-blue-light px-3 py-1 rounded-full text-sm font-medium"
+                className="bg-mdpc-blue/20 text-mdpc-blue dark:bg-mdpc-blue/20 dark:text-mdpc-blue-light px-3 py-1 rounded-full text-sm font-medium"
               >
                 Efficiency
               </motion.span>
@@ -177,7 +177,7 @@ const AboutSection = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.4, delay: 1.0 }}
-                className="bg-mdpc-gold/10 text-mdpc-gold dark:bg-mdpc-gold/20 px-3 py-1 rounded-full text-sm font-medium"
+                className="bg-mdpc-gold/20 text-mdpc-gold-dark dark:bg-mdpc-gold/20 dark:text-mdpc-gold px-3 py-1 rounded-full text-sm font-medium"
               >
                 Innovation
               </motion.span>
@@ -185,7 +185,7 @@ const AboutSection = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.4, delay: 1.1 }}
-                className="bg-mdpc-blue/10 text-mdpc-blue dark:bg-mdpc-blue/20 dark:text-mdpc-blue-light px-3 py-1 rounded-full text-sm font-medium"
+                className="bg-mdpc-blue/20 text-mdpc-blue dark:bg-mdpc-blue/20 dark:text-mdpc-blue-light px-3 py-1 rounded-full text-sm font-medium"
               >
                 Excellence
               </motion.span>
@@ -244,7 +244,7 @@ const AboutSection = () => {
                       opacity: 0 
                     }}
                     transition={{ duration: 0.6, delay: 0.3 + (index * 0.2) }}
-                    className={`absolute w-5/12 bg-white dark:bg-gray-800 p-5 rounded-lg shadow-premium hover:shadow-premium-hover transition-all duration-300 ${
+                    className={`absolute w-5/12 bg-white dark:bg-gray-800 p-5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ${
                       index % 2 === 0 ? 'left-0 pr-8 text-right' : 'right-0 pl-8 text-left'
                     }`}
                   >

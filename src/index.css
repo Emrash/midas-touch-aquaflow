@@ -161,4 +161,85 @@
   .dark ::-webkit-scrollbar-thumb:hover {
     background: theme('colors.mdpc.gold.dark');
   }
+  
+  /* Water ripple animation */
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(6);
+      opacity: 0;
+    }
+  }
+  
+  .animate-ripple {
+    animation: ripple 3s ease-out infinite;
+  }
+  
+  /* Float animation */
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+  
+  .animate-float {
+    animation: float 2s ease-in-out infinite;
+  }
+  
+  .animate-float-slow {
+    animation: float 4s ease-in-out infinite;
+  }
+  
+  /* Shadow glow effect */
+  .shadow-gold-glow {
+    box-shadow: 0 0 15px theme('colors.mdpc.gold.DEFAULT');
+  }
+  
+  /* Pulse glow animation */
+  @keyframes pulseGlow {
+    0% {
+      box-shadow: 0 0 5px theme('colors.mdpc.gold.DEFAULT');
+    }
+    50% {
+      box-shadow: 0 0 20px theme('colors.mdpc.gold.DEFAULT');
+    }
+    100% {
+      box-shadow: 0 0 5px theme('colors.mdpc.gold.DEFAULT');
+    }
+  }
+  
+  .animate-pulse-glow {
+    animation: pulseGlow 3s infinite;
+  }
+  
+  /* Water flow animation */
+  @keyframes waterFlow {
+    0% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(-5%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+  
+  .animate-water-flow {
+    animation: waterFlow 10s ease-in-out infinite;
+  }
+  
+  /* Glass card effect */
+  .glass-card {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg;
+  }
 }

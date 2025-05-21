@@ -133,7 +133,7 @@ const HeroSection = () => {
       }}
     >
       {/* Enhanced overlay with gradient */}
-      <div className="hero-overlay"></div>
+      <div className="absolute inset-0 bg-black/40 dark:bg-black/60"></div>
       
       {/* Water ripples */}
       <div className="water-ripple">
@@ -173,7 +173,7 @@ const HeroSection = () => {
           </motion.div>
           
           <motion.h1 
-            className="text-white mb-6 font-heading leading-tight"
+            className="text-white mb-6 font-heading leading-tight text-4xl md:text-5xl lg:text-6xl font-bold"
             variants={itemVariants}
           >
             Nigeria's Foremost Borehole Drilling & Project Consulting Partner

@@ -8,6 +8,7 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const isHomePage = location.pathname === '/';
 
   useEffect(() => {
     // Check for system preference or saved preference
@@ -49,7 +50,7 @@ export function ThemeToggle() {
   };
   
   // Determine if we're on a transparent hero section
-  const isTransparentHero = !isScrolled && location.pathname === '/';
+  const isTransparentHero = !isScrolled && isHomePage;
 
   return (
     <Button

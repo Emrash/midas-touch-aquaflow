@@ -19,8 +19,8 @@ interface ProjectUploadModalProps {
 }
 
 // Cloudinary configuration
-const CLOUDINARY_CLOUD_NAME = "dv0smnf2d"; // Replace with your cloud name
-const CLOUDINARY_UPLOAD_PRESET = "idyequuh"; // Replace with your upload preset
+const CLOUDINARY_CLOUD_NAME = "dlmrufbme"; // Cloud Name
+const CLOUDINARY_UPLOAD_PRESET = "midas-touch"; // Upload Preset
 
 const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalProps) => {
   const [title, setTitle] = useState("");
@@ -66,7 +66,7 @@ const ProjectUploadModal = ({ isOpen, onClose, onSuccess }: ProjectUploadModalPr
     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
   
-  // New function to upload images to Cloudinary
+  // Function to upload images to Cloudinary
   const uploadToCloudinary = async (file: File): Promise<string> => {
     try {
       console.log(`Starting Cloudinary upload for file: ${file.name}`);
